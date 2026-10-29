@@ -1,0 +1,6 @@
+.env
+__pycache__/
+.cuttit-work/
+*.mp4
+*.mov
+.pytest_cache/
