@@ -73,4 +73,7 @@ def run_forever(poll_seconds: float = 3.0) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    if settings.wa_token:
+        from .bot import deliver
+        on_video_ready = deliver
     run_forever()

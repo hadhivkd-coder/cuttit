@@ -63,6 +63,12 @@ create table if not exists jobs (
 );
 create index if not exists jobs_ready on jobs (run_after) where status = 'queued';
 
+-- WhatsApp message ids already handled (Meta can deliver the same webhook twice).
+create table if not exists wa_messages (
+    id           text primary key,
+    received_at  timestamptz not null default now()
+);
+
 -- Take one video credit from the client's active pack. Returns the subscription id,
 -- or null when they have no videos left.
 create or replace function use_video_credit(p_client uuid) returns uuid
