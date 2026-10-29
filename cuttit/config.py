@@ -25,6 +25,17 @@ class Settings:
     r2_secret_key: str | None = field(default_factory=lambda: _env("R2_SECRET_ACCESS_KEY"))
     r2_bucket: str = field(default_factory=lambda: _env("R2_BUCKET", "cuttit"))
 
+    # WhatsApp Cloud API (developers.facebook.com > your app > WhatsApp > API setup)
+    wa_token: str | None = field(default_factory=lambda: _env("WHATSAPP_TOKEN"))
+    wa_phone_number_id: str | None = field(default_factory=lambda: _env("WHATSAPP_PHONE_NUMBER_ID"))
+    wa_verify_token: str | None = field(default_factory=lambda: _env("WHATSAPP_VERIFY_TOKEN"))
+    wa_app_secret: str | None = field(default_factory=lambda: _env("WHATSAPP_APP_SECRET"))
+    wa_api_version: str = field(default_factory=lambda: _env("WHATSAPP_API_VERSION", "v21.0"))
+    # Where clients pay until Razorpay subscriptions are set up (UPI link or payment page).
+    payment_link: str = field(default_factory=lambda: _env("CUTTIT_PAYMENT_LINK", ""))
+    # Your own WhatsApp number, for alerts like "this video needs a hand edit".
+    admin_phone: str | None = field(default_factory=lambda: _env("CUTTIT_ADMIN_PHONE"))
+
     # Font used for burned-in captions. Must cover Malayalam (e.g. Noto Sans Malayalam).
     caption_font: str = field(default_factory=lambda: _env("CUTTIT_CAPTION_FONT", "Noto Sans Malayalam"))
     fonts_dir: str | None = field(default_factory=lambda: _env("CUTTIT_FONTS_DIR"))

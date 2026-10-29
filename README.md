@@ -51,11 +51,29 @@ Transcripts and the last plan are cached in `.cuttit-work/`, so a revision only 
 2. Create an R2 bucket and an API token; fill in the `R2_*` values.
 3. Start a worker on any server with ffmpeg: `python -m cuttit.worker`. Start more when the queue
    gets long.
+4. Start the WhatsApp bot: `uvicorn cuttit.bot:app --host 0.0.0.0 --port 8000`, behind HTTPS.
+   In the Meta developer console, set the webhook URL to `https://<your-domain>/webhook`, use your
+   `WHATSAPP_VERIFY_TOKEN`, and subscribe to `messages`.
+5. When a client pays, activate their pack:
+   `python -m cuttit.admin add-pack +919876543210 20 4500 --name "Client name"`.
+   `python -m cuttit.admin queue` shows what's waiting, failed, or needs a hand edit.
 
-The WhatsApp bot that creates videos and enqueues jobs is the next piece.
+### What the client sees on WhatsApp
+
+1. "Hi" → if they have no pack, the prices and payment link; otherwise a style menu.
+2. They pick a style and send clips (as documents for best quality), then tap **Done**.
+3. The rough cut arrives with **Looks good** / **Make changes** buttons. Any typed message
+   (English or Malayalam) is taken as the change request; "ok", "ശരി", 👍 and so on approve it.
+4. The final 1080p video arrives. Real estate, product and event videos go to you for a hand
+   edit, and you get a WhatsApp alert.
+
+Note: WhatsApp only allows free-form replies within 24 hours of the client's last message.
+Deliveries usually land well inside that; for later ones you'll need an approved message template.
 
 ## Tests
 
 ```bash
 pip install pytest && python -m pytest -q
+# Also run the database test against an empty Postgres with db/schema.sql loaded:
+CUTTIT_TEST_DATABASE_URL=postgresql://... python -m pytest -q
 ```
