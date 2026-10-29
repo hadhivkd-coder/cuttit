@@ -13,7 +13,10 @@ def _env(name: str, default: str | None = None) -> str | None:
 class Settings:
     anthropic_model: str = field(default_factory=lambda: _env("CUTTIT_CLAUDE_MODEL", "claude-opus-5-5"))
     gemini_api_key: str | None = field(default_factory=lambda: _env("GEMINI_API_KEY"))
-    gemini_model: str = field(default_factory=lambda: _env("CUTTIT_GEMINI_MODEL", "gemini-2.5-flash"))
+    gemini_model: str = field(default_factory=lambda: _env("CUTTIT_GEMINI_MODEL", "gemini-3.8-flash"))
+    # Tried in order when the main model is overloaded (503) or unavailable.
+    gemini_fallbacks: tuple[str, ...] = field(default_factory=lambda: tuple(
+        m.strip() for m in _env("CUTTIT_GEMINI_FALLBACKS", "gemini-3.7-flash,gemini-3.5-flash").split(",") if m.strip()))
 
     database_url: str | None = field(default_factory=lambda: _env("DATABASE_URL"))
 
