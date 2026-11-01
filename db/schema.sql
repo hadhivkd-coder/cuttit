@@ -9,6 +9,7 @@ create table if not exists clients (
     phone       text not null unique,          -- E.164, e.g. +9198xxxxxxxx
     name        text,
     language    text not null default 'ml',    -- caption language: ml, en, or mixed
+    access_token text unique,                  -- secret part of the client's website link
     created_at  timestamptz not null default now()
 );
 
@@ -31,6 +32,7 @@ create table if not exists videos (
     id            uuid primary key default gen_random_uuid(),
     client_id     uuid not null references clients(id) on delete cascade,
     subscription_id uuid references subscriptions(id),
+    source        text not null default 'whatsapp' check (source in ('whatsapp', 'web')),
     style         text not null check (style in ('talking_head', 'podcast', 'real_estate', 'product', 'event')),
     status        text not null default 'waiting_clips'
                   check (status in ('waiting_clips', 'queued', 'editing', 'rough_sent',
@@ -62,6 +64,10 @@ create table if not exists jobs (
     created_at  timestamptz not null default now()
 );
 create index if not exists jobs_ready on jobs (run_after) where status = 'queued';
+
+-- Upgrading a database created before the website existed:
+alter table clients add column if not exists access_token text unique;
+alter table videos add column if not exists source text not null default 'whatsapp';
 
 -- WhatsApp message ids already handled (Meta can deliver the same webhook twice).
 create table if not exists wa_messages (
