@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuttit</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #ffffff; --text: #1b1b1f; --muted: #6b6b75; --line: #e4e2dc;
+    --accent: #ff5a1f; --accent-ink: #ffffff; --ok: #1f9d55; --warn: #b7791f; --bad: #c53030;
+    --chip: #f0eee9; --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121214; --card: #1c1c20; --text: #f2f2f4; --muted: #a0a0aa; --line: #2c2c33;
+      --accent: #ff6a33; --chip: #26262c; --ok: #48bb78; --warn: #ecc94b; --bad: #fc8181;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Malayalam", sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 20px 16px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .logo { font-weight: 800; font-size: 24px; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .pill { background: var(--chip); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: var(--muted); }
+  .pill b { color: var(--text); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; }
+  h2 { font-size: 18px; margin: 0 0 12px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .styles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 14px; }
+  .style { border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; background: transparent;
+           text-align: left; color: inherit; font: inherit; }
+  .style b { display: block; font-size: 15px; }
+  .style small { color: var(--muted); font-size: 13px; line-height: 1.3; display: block; }
+  .style[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+  .drop { display: block; border: 2px dashed var(--line); border-radius: 12px; padding: 22px; text-align: center; cursor: pointer; }
+  .drop.over { border-color: var(--accent); }
+  .files { list-style: none; padding: 0; margin: 12px 0 0; }
+  .files li { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .files li:last-child { border-bottom: 0; }
+  .bar { grid-column: 1 / -1; height: 4px; background: var(--chip); border-radius: 4px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px; padding: 12px 18px;
+                   font: inherit; font-weight: 600; cursor: pointer; width: 100%; margin-top: 14px; }
+  button.secondary { background: var(--chip); color: var(--text); border: 0; border-radius: 10px; padding: 10px 14px; font: inherit; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .video { display: grid; gap: 10px; }
+  .video-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .status { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .status.ok { color: var(--ok); } .status.wait { color: var(--warn); } .status.bad { color: var(--bad); }
+  video { width: 100%; max-height: 70vh; border-radius: 10px; background: #000; }
+  textarea { width: 100%; min-height: 80px; border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+             background: var(--bg); color: var(--text); font: inherit; resize: vertical; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1; }
+  a.download { display: block; text-align: center; text-decoration: none; background: var(--accent); color: var(--accent-ink);
+               border-radius: 10px; padding: 12px 18px; font-weight: 600; }
+  .error { color: var(--bad); font-size: 14px; margin-top: 8px; min-height: 1em; }
+  .empty { text-align: center; padding: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo">Cutt<span>it</span></div>
+    <div class="pill" id="credits">…</div>
+  </header>
+
+  <section class="card" id="new">
+    <h2>New video</h2>
+    <div class="styles" id="styles"></div>
+    <label class="drop" id="drop">
+      <input type="file" id="picker" accept="video/*" multiple hidden>
+      <b>Tap to choose clips</b><br><span class="muted">or drop them here. Send all the takes; we'll pick the best parts.</span>
+    </label>
+    <ul class="files" id="files"></ul>
+    <button class="primary" id="start" disabled>Start editing</button>
+    <div class="error" id="new-error"></div>
+  </section>
+
+  <h2 style="margin:24px 4px 12px">Your videos</h2>
+  <div id="videos"></div>
+</main>
+
+<script>
+const token = location.pathname.split("/").filter(Boolean).pop();
+const api = (path, opts = {}) => fetch(`/api/c/${token}${path}`, {
+  headers: { "Content-Type": "application/json" }, ...opts,
+}).then(async r => {
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail || `Something went wrong (${r.status})`);
+  return data;
+});
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+let style = "talking_head";
+let files = [];
+let credits = 0;
+let busy = false;
+
+const STATUS = {
+  waiting_clips: ["Waiting for clips", "wait"],
+  queued: ["Editing…", "wait"],
+  editing: ["Editing…", "wait"],
+  revising: ["Making the final…", "wait"],
+  rough_sent: ["Rough cut ready", "ok"],
+  final_sent: ["Done", "ok"],
+  failed: ["Couldn't edit this one. Your credit was returned.", "bad"],
+};
+
+function renderStyles(styles) {
+  $("styles").innerHTML = styles.map(s => `
+    <button class="style" data-id="${s.id}" aria-pressed="${s.id === style}">
+      <b>${esc(s.name)}</b><small>${esc(s.description)}${s.manual ? " · edited by our team" : ""}</small>
+    </button>`).join("");
+  $("styles").querySelectorAll(".style").forEach(b => b.onclick = () => {
+    style = b.dataset.id;
+    $("styles").querySelectorAll(".style").forEach(x => x.setAttribute("aria-pressed", x === b));
+  });
+}
+
+function renderFiles() {
+  $("files").innerHTML = files.map((f, i) => `
+    <li><span>${esc(f.file.name)}</span><span class="muted">${(f.file.size / 1048576).toFixed(0)} MB</span>
+    <div class="bar"><i id="bar-${i}" style="width:${f.progress}%"></i></div></li>`).join("");
+  $("start").disabled = busy || !files.length || credits < 1;
+  $("start").textContent = credits < 1 ? "No videos left in your pack" : busy ? "Uploading…" : "Start editing";
+}
+
+function addFiles(list) {
+  if (busy) return;
+  for (const file of list) if (file.type.startsWith("video/")) files.push({ file, progress: 0 });
+  renderFiles();
+}
+
+function put(url, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
+    xhr.upload.onprogress = e => e.lengthComputable && onProgress(100 * e.loaded / e.total);
+    xhr.onload = () => xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (${xhr.status})`));
+    xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
+    xhr.send(file);
+  });
+}
+
+async function start() {
+  busy = true; $("new-error").textContent = ""; renderFiles();
+  try {
+    const { id } = await api("/videos", { method: "POST", body: JSON.stringify({ style }) });
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const { upload_url } = await api(`/videos/${id}/clips`, {
+        method: "POST", body: JSON.stringify({ filename: f.file.name, content_type: f.file.type || "video/mp4" }),
+      });
+      await put(upload_url, f.file, p => { f.progress = p; const bar = $(`bar-${i}`); if (bar) bar.style.width = p + "%"; });
+    }
+    await api(`/videos/${id}/submit`, { method: "POST" });
+    files = [];
+  } catch (e) {
+    $("new-error").textContent = e.message;
+  }
+  busy = false; renderFiles(); load();
+}
+
+function videoCard(v) {
+  const [label, tone] = STATUS[v.status] || [v.status, "wait"];
+  let body = "";
+  if (v.status === "rough_sent" && v.rough_url) {
+    body = `
+      <video src="${esc(v.rough_url)}" controls playsinline preload="metadata"></video>
+      ${v.notes ? `<div class="muted">Editor's note: ${esc(v.notes)}</div>` : ""}
+      <button class="primary" data-approve="${v.id}">Looks good, make the final</button>
+      <textarea id="fb-${v.id}" placeholder="Or tell us what to change (English or Malayalam), e.g. &quot;start with the offer&quot;"></textarea>
+      <button class="secondary" data-changes="${v.id}">Send changes</button>
+      <div class="error" id="err-${v.id}"></div>`;
+  } else if (v.status === "final_sent" && v.final_url) {
+    body = `
+      <video src="${esc(v.final_url)}" controls playsinline preload="metadata"></video>
+      <a class="download" href="${esc(v.final_url)}" download="cuttit.mp4">Download</a>`;
+  } else if (["queued", "editing", "revising"].includes(v.status)) {
+    body = `<div class="muted">This page updates by itself. You can close it and come back later.</div>`;
+  }
+  const date = new Date(v.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return `<section class="card video">
+    <div class="video-head"><b>${esc(v.style_name)} <span class="muted">· ${date} · ${v.clips} clip${v.clips === 1 ? "" : "s"}</span></b>
+    <span class="status ${tone}">${esc(label)}</span></div>${body}</section>`;
+}
+
+async function act(id, path, body) {
+  try {
+    await api(`/videos/${id}/${path}`, { method: "POST", body: body && JSON.stringify(body) });
+    load();
+  } catch (e) { const el = $(`err-${id}`); if (el) el.textContent = e.message; }
+}
+
+let timer;
+async function load() {
+  clearTimeout(timer);
+  let data;
+  try { data = await api(""); } catch (e) { document.querySelector("main").innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return; }
+  credits = data.credits;
+  $("credits").innerHTML = `<b>${credits}</b> video${credits === 1 ? "" : "s"} left`;
+  if (!$("styles").children.length) renderStyles(data.styles);
+  renderFiles();
+  // Keep a video the client is reviewing in place while polling.
+  const typing = document.activeElement && document.activeElement.tagName === "TEXTAREA";
+  const playing = [...document.querySelectorAll("video")].some(v => !v.paused);
+  const shown = data.videos.filter(v => v.status !== "waiting_clips");
+  if (!typing && !playing) {
+    $("videos").innerHTML = shown.length ? shown.map(videoCard).join("")
+      : `<div class="card empty muted">Your edited videos will show up here.</div>`;
+    $("videos").querySelectorAll("[data-approve]").forEach(b => b.onclick = () => act(b.dataset.approve, "approve"));
+    $("videos").querySelectorAll("[data-changes]").forEach(b => b.onclick = () => {
+      const text = $(`fb-${b.dataset.changes}`).value.trim();
+      if (text.length < 2) { $(`err-${b.dataset.changes}`).textContent = "Write what you'd like changed."; return; }
+      act(b.dataset.changes, "changes", { text });
+    });
+  }
+  if (data.videos.some(v => ["queued", "editing", "revising"].includes(v.status)) || typing || playing)
+    timer = setTimeout(load, 8000);
+}
+
+$("picker").onchange = e => { addFiles(e.target.files); e.target.value = ""; };
+const drop = $("drop");
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); addFiles(e.dataTransfer.files); };
+$("start").onclick = start;
+load();
+</script>
+</body>
+</html>

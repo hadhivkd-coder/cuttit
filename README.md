@@ -1,7 +1,7 @@
 # Cuttit
 
-AI video editing over WhatsApp. Clients send raw clips; Cuttit sends back an edited 9:16 reel with
-Malayalam/English captions, first as a rough cut and then as the final.
+AI video editing on the web and over WhatsApp. Clients upload raw clips; Cuttit gives back an
+edited 9:16 reel with Malayalam/English captions, first as a rough cut and then as the final.
 
 ## How it works
 
@@ -45,10 +45,31 @@ python -m cuttit.cli clip1.mp4 clip2.mp4 --final --feedback "start with the pric
 
 Transcripts and the last plan are cached in `.cuttit-work/`, so a revision only costs one Claude call.
 
+## Try the website on your laptop (no cloud accounts)
+
+Everything runs locally: Postgres for the data and a folder instead of R2 for the files.
+
+```bash
+pip install -r requirements.txt
+createdb cuttit && psql cuttit -f db/schema.sql
+export DATABASE_URL=postgresql:///cuttit CUTTIT_LOCAL_STORAGE=$PWD/.files
+export ANTHROPIC_API_KEY=... GEMINI_API_KEY=...
+
+python -m cuttit.admin add-pack +919876543210 20 4500 --name "Test"   # prints your private link
+uvicorn cuttit.bot:app --port 8000      # website (and WhatsApp webhook)
+python -m cuttit.worker                 # in a second terminal: does the editing
+```
+
+Open the printed link (`http://localhost:8000/app/...`), pick a style, upload clips, and the rough
+cut shows up on the page when it's ready. Local-storage mode is for testing only: its file URLs
+have no login, so use R2 for real clients.
+
 ## Run the service
 
 1. Create a Supabase project and run `psql "$DATABASE_URL" -f db/schema.sql`.
-2. Create an R2 bucket and an API token; fill in the `R2_*` values.
+2. Create an R2 bucket and an API token; fill in the `R2_*` values. For website uploads, add a
+   CORS rule to the bucket allowing `PUT` and `GET` from your site's address (`CUTTIT_PUBLIC_URL`)
+   with the `Content-Type` header.
 3. Start a worker on any server with ffmpeg: `python -m cuttit.worker`. Start more when the queue
    gets long.
 4. Start the WhatsApp bot: `uvicorn cuttit.bot:app --host 0.0.0.0 --port 8000`, behind HTTPS.
@@ -56,7 +77,15 @@ Transcripts and the last plan are cached in `.cuttit-work/`, so a revision only 
    `WHATSAPP_VERIFY_TOKEN`, and subscribe to `messages`.
 5. When a client pays, activate their pack:
    `python -m cuttit.admin add-pack +919876543210 20 4500 --name "Client name"`.
+   It prints the client's private website link; send it to them.
    `python -m cuttit.admin queue` shows what's waiting, failed, or needs a hand edit.
+
+### What the client sees on the website
+
+Their private link opens a page showing how many videos are left. They pick a style, choose clips
+(they upload straight to storage, with a progress bar), and tap **Start editing**. The rough cut
+plays on the page with **Looks good** and a box for changes; the final appears with a
+**Download** button. The page refreshes itself while an edit is running.
 
 ### What the client sees on WhatsApp
 

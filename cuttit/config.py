@@ -36,6 +36,11 @@ class Settings:
     # Your own WhatsApp number, for alerts like "this video needs a hand edit".
     admin_phone: str | None = field(default_factory=lambda: _env("CUTTIT_ADMIN_PHONE"))
 
+    # Public address of the server, used in client website links and local-storage URLs.
+    public_url: str = field(default_factory=lambda: _env("CUTTIT_PUBLIC_URL", "http://localhost:8000").rstrip("/"))
+    # Keep files on this server's disk instead of R2 (for trying things out without a cloud account).
+    local_storage_dir: str | None = field(default_factory=lambda: _env("CUTTIT_LOCAL_STORAGE"))
+
     # Font used for burned-in captions. Must cover Malayalam (e.g. Noto Sans Malayalam).
     caption_font: str = field(default_factory=lambda: _env("CUTTIT_CAPTION_FONT", "Noto Sans Malayalam"))
     fonts_dir: str | None = field(default_factory=lambda: _env("CUTTIT_FONTS_DIR"))

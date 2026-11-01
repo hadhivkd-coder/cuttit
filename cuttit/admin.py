@@ -5,20 +5,26 @@
 """
 
 import argparse
+import secrets
 
+from .config import settings
 from .jobs import connect
 
 
 def add_pack(phone: str, size: int, price: int, name: str | None) -> None:
     with connect() as conn:
-        client = conn.execute(
-            "insert into clients (phone, name) values (%s, %s) on conflict (phone) "
-            "do update set name = coalesce(excluded.name, clients.name) returning id",
-            (phone, name)).fetchone()["id"]
+        row = conn.execute(
+            "insert into clients (phone, name, access_token) values (%s, %s, %s) on conflict (phone) "
+            "do update set name = coalesce(excluded.name, clients.name), "
+            "access_token = coalesce(clients.access_token, excluded.access_token) "
+            "returning id, access_token",
+            (phone, name, secrets.token_urlsafe(18))).fetchone()
         conn.execute("insert into subscriptions (client_id, pack_size, videos_left, price_inr) "
-                     "values (%s, %s, %s, %s)", (client, size, size, price))
+                     "values (%s, %s, %s, %s)", (row["id"], size, size, price))
         conn.commit()
-    print(f"Added {size}-video pack for {phone}. They can message the bot now.")
+    print(f"Added {size}-video pack for {phone}.")
+    print("WhatsApp: they can message the bot now.")
+    print(f"Website:  {settings.public_url}/app/{row['access_token']}  (send them this private link)")
 
 
 def show_queue() -> None:
