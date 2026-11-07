@@ -1,174 +1,142 @@
-# cuttit strategy
+# cuttit: 30-day sprint strategy
+**Runs 7 Nov to 6 Dec 2026. Goal: as much revenue as possible in 30 days, then close and start the next program.**
 
-## 1. The idea in one line
-A store of 40-60 Claude skills, one per editing style. Each skill comes with a short demo video showing exactly what it makes.
-Buyers see the demo, buy the skill, and make the same edit on their own footage.
+## 1. Why a sprint
+After about a month, "Claude makes your reels" stops being new and anyone can write these skills themselves.
+So everything is planned to **sell fast now** and turn buyers into **editing-service clients**, because the service keeps
+earning after the skills stop selling.
 
-## 2. The three things every product has
-Every skill in the store is one product, and every product has exactly these three parts:
+Two products:
+1. **Skill pack:** all the editing skills, sold until 6 Dec.
+2. **Editing service:** send a video on WhatsApp, get an edited reel back. Starts **14 Nov**.
 
-| Part | What it is | Who sees it |
-|------|------------|-------------|
-| `SKILL.md` | The instructions Claude follows to make the edit | Buyers only (after payment) |
-| Demo video | 10-15 s, 9:16, the skill applied to an AI talking-head clip | Everyone (website + Instagram) |
-| Listing | Name, one-line promise, category, price, cover image | Everyone (website) |
+## 2. The offer
 
-If a skill doesn't have all three, it doesn't go live.
+### Skill pack (sold until 6 Dec)
+| Week | Price | Why it goes up |
+|------|-------|----------------|
+| 7-13 Nov | ₹299 | Launch price |
+| 14-20 Nov | ₹399 | More skills inside by then |
+| 21-27 Nov | ₹499 | More skills again |
+| 28 Nov-6 Dec | ₹499, then closes | Sales actually stop on 6 Dec |
 
-## 3. Catalog structure
-Two categories, so the store stays simple:
+- Single skills: ₹49 each.
+- These are real price rises and a real end date, so you can say them honestly: "price goes up Friday", "closes 6 Dec".
+- **Don't promise "lifetime updates" or "all future skills".** The program ends. Promise "every skill released before 6 Dec".
 
-- **Video styles (20-30):** edits applied to talking-head footage: captions, zooms, b-roll, reframing, podcast clips, etc.
-- **Motion graphics (20-30):** animated elements: titles, maps, charts, lower thirds, transitions, kinetic text, etc.
+### Editing service (from 14 Nov)
+| Package | Price | What |
+|---------|-------|------|
+| Single reel | ₹299 | 1 video (up to 60 s), back in 24 h |
+| Starter | ₹1,999 | 10 reels |
+| Creator / business month | ₹4,999 | 30 reels, priority 12 h turnaround |
 
-The 12 skills we have already get sorted into these two.
+Skill-pack buyers get their first edited reel free, so they try the service.
+Prices are starting points: if all your slots sell out in 2 days, raise them.
 
-## 4. Repo structure (the system)
+## 3. How the service works in week 1 (no waiting for approvals)
+The fully automated WhatsApp bot needs Meta Business verification and the WhatsApp Cloud API, which can take days to weeks.
+So **don't wait**:
+
+1. **Now:** get a separate number on the **WhatsApp Business app** (free, works today). Add a catalog with the 3 packages,
+   a greeting message, and quick replies.
+2. Clients send the video + choose a style (the style numbers = the skills).
+3. **You run the edit in Claude Code with the skills**, then send it back. Payment by UPI / Razorpay link before the edit.
+4. Cap it: **max 15 reels a day** at first, so the 24 h promise is always kept.
+5. **At the same time:** start Meta Business verification on day 1. When it's approved, automate the most-ordered style first
+   (see ROADMAP.md), then the next.
+
+Customers see the same thing either way ("send a video, get a reel"), so there's no reason to wait for the bot.
+
+Costs per reel to track: your time + Claude plan + ElevenLabs / Higgsfield credits if the style uses them.
+Only offer AI voice / generated b-roll on packages where the price covers the credits.
+
+## 4. Who buys what
+| Who | Buys | Where to find them |
+|-----|------|--------------------|
+| Creators who want to learn | Skill pack | Instagram reels + comment-to-DM |
+| Creators who don't have time | Service | The same reels: "or just send it to us" |
+| Local businesses (restaurants, gyms, salons, real estate, shops) | Service, monthly | Direct DMs + WhatsApp, with a free sample reel made from their own Instagram video |
+
+Local businesses pay the most and pay monthly. Spend 1 hour every day on direct outreach to them from week 2.
+
+## 5. Revenue targets
+These are **targets to aim for**, not forecasts: the real numbers depend on how many people your reels reach.
+Check them every Sunday and adjust.
+
+| Source | Target | Revenue |
+|--------|--------|---------|
+| Skill packs | 250 sales at ~₹400 average | ~₹1,00,000 |
+| Single skills | 200 sales at ₹49 | ~₹10,000 |
+| Service: single reels | 60 at ₹299 | ~₹18,000 |
+| Service: starter packs | 20 at ₹1,999 | ~₹40,000 |
+| Service: monthly clients | 10 at ₹4,999 | ~₹50,000 |
+| **Total** | | **~₹2,18,000** |
+
+## 6. The 30 days, week by week
+
+### Week 1 (7-13 Nov): launch the skill pack, prepare the service
+- Payment links live (Razorpay or Gumroad); site online with the 12 skills; repo private.
+- 8 new skills, so 20 at launch. You send the styles; I write the skills.
+- Make AI talking-head demo clips (10-15 s) for each skill. **Post 3 reels a day**, each with a comment keyword.
+- ManyChat comment-to-DM sends the product link.
+- Service setup: WhatsApp Business number, catalog, payment link, style menu. Start Meta verification.
+- Collect a waitlist: "Service opens 14 Nov. First 20 get 20% off."
+
+### Week 2 (14-20 Nov): service live
+- Open the service to the waitlist first, then everyone.
+- Skills to 30. Price to ₹399 on 14 Nov.
+- Start local-business outreach: 20 DMs a day with a free sample reel.
+- Post every finished client reel (with permission) as proof.
+
+### Week 3 (21-27 Nov): scale what works
+- Look at the numbers: which skills sell, which service package sells. Do more of the top one, drop the rest.
+- Skills to 40. Price to ₹499.
+- Automate the most-ordered service style if Meta approval is through; otherwise add a helper editor.
+
+### Week 4 (28 Nov-6 Dec): final push and close
+- "Closes 6 Dec" countdown in reels and stories (it really closes).
+- Offer: skill pack + 3 edited reels bundle.
+- Move every happy client to a monthly plan.
+- 6 Dec: stop selling skills. Keep the service running. Plan the next program.
+
+## 7. Community (kept small for 30 days)
+- **One WhatsApp Community for buyers**, with groups: Announcements, Help, Showcase.
+- Weekly: new skill drop (Mon), challenge (Wed), 30-min live build (Fri), best edits reposted (Sun, with credit).
+- Its real job in this sprint: answer questions fast (fewer refunds), collect member edits to post as proof,
+  and **turn members into service clients and referrers** (20% referral commission).
+- After 6 Dec it becomes the launch list for the next program.
+
+## 8. The system (repo structure)
 ```
 cuttit/
-  catalog.json                 # the single list of every product -> the website reads this
-  skills/
-    video/<slug>/
-      SKILL.md                 # the product
-      meta.json                # name, promise, category, price, status
-      demo/source.mp4          # the raw AI talking-head clip (not shipped)
-      demo/demo.mp4            # the finished demo, watermarked
-      demo/cover.jpg           # first frame / cover
-    motion/<slug>/ ...         # same shape
-  templates/                   # blank SKILL.md and meta.json to copy for new skills
-  site/                        # the store
+  catalog.json           # every skill: name, category, price, status -> the website reads this
+  skills/video/<slug>/   # SKILL.md, meta.json, demo/ (source clip, demo video, cover)
+  skills/motion/<slug>/
+  templates/             # blank SKILL.md + meta.json
+  service/               # style menu, price list, quick replies, client tracker
+  site/                  # the store
 ```
-One folder per skill, always the same shape. Adding a product means copying the template, filling it in, and setting `status` to `live`.
+Per skill, every time: write the skill -> AI clip -> edit with the skill -> QA -> watermarked demo -> live.
 
-## 5. Production pipeline (per skill)
-Same 6 steps every time, so 40-60 is a routine job, not 40-60 projects:
-
-1. **Spec:** you send the style (a screenshot, screen recording, or description). I write `SKILL.md` + `meta.json`.
-2. **Source clip:** you generate a 10-15 s AI talking-head clip (Gemini / Veo or similar).
-   - Use 2-3 recurring AI "presenters" so the whole store looks like one brand.
-   - Keep a script library (section 6) so each clip says something useful, not filler.
-   - Export 1080x1920 if possible; if not, the auto-reframe skill fixes it.
-3. **Edit:** run the skill in Claude Code on the source clip. Give notes until it looks right.
-   If the skill needed a fix to get there, **update `SKILL.md`**: buyers must get the version that worked.
-4. **QA checklist:** text inside the safe area; nothing covers the face; captions match the audio;
-   audio loudness normal; exported 1080x1920 30 fps; runs on a fresh machine from the instructions alone.
-5. **Demo export:** small "cuttit" watermark; compress for the web (under 2 MB, `crf 28`, no audio track
-   for the autoplay preview + a version with audio for Instagram); cover image.
-6. **List it:** add to `catalog.json`, set `status: live`. The site updates itself.
-
-Batching: script 10 clips -> generate 10 -> edit 10 -> QA 10. A batch of 10 is about 2 days of work.
-
-## 6. Source clips: script library
-Every demo clip is also content, so it should say something people want to hear. Rotate these themes:
-- AI/Claude tips ("3 things Claude can do that you didn't know")
-- Creator tips ("Why your reels die in the first second")
-- Small-business tips ("Your shop needs this one video")
-
-Rules for AI talking heads:
-- Check the generator's terms allow commercial use, and keep any watermark it requires (Google adds SynthID to Veo output).
-- Don't make an AI presenter that looks or sounds like a real person or celebrity.
-- Label it as AI where Instagram asks (the "AI info" label).
-
-## 7. Pricing
-Simple ladder. Prices are a starting point; change them after the first 2 weeks of sales data.
-
-| Product | Price | Why |
-|---------|-------|-----|
-| Single skill | ₹49 | Impulse buy, easy first purchase |
-| Video styles pack (all) | ₹299 | Main product |
-| Motion graphics pack (all) | ₹299 | Main product |
-| All access (every skill + all future ones) | ₹499 | Best value; this is what you push |
-| Free skill | ₹0 | 1-2 skills, given out on Instagram for follows and email signups |
-
-Anyone who already bought the 12-skill pack gets upgraded to all access free. Early buyers become your best promoters.
-
-## 8. Website (store)
-- **Home:** headline + one hero demo + "All access ₹499" button.
-- **Catalog:** grid of demo videos (muted, autoplaying, looping) with a filter: All / Video styles / Motion graphics.
-  Tap a card -> the product page.
-- **Product page:** the demo with sound, what it does, what you need (Claude Code, ffmpeg...), price, buy button,
-  "included in all access" note.
-- **Checkout + delivery:** start with Razorpay Payment Pages or Gumroad (UPI, automatic download email).
-  Move to our own checkout only once sales justify it.
-- **Video hosting:** small MP4s in the site are fine up to ~60 videos. Move to Cloudflare Stream or Bunny if bandwidth grows.
-- Everything is generated from `catalog.json`, so adding a skill never means editing HTML.
-
-## 9. Marketing
-Every demo video is also a reel. 40-60 products = 40-60 posts with no extra work.
-- Post 2-3 a day. Caption: "Made this edit with one Claude skill. Comment <WORD> to get it."
-- ManyChat sends the product page link (not the file) for paid skills, and the file for the 1-2 free ones.
-- Collect emails on free downloads. Email list = launch list for the WhatsApp service.
-- Track which comment words win. Make more skills in those styles.
-
-## 10. Community
-The community is what makes people stay after they buy, and it's why all access is worth ₹499.
-
-### Two levels
-| Level | Where | Who | What they get |
-|-------|-------|-----|---------------|
-| Free | Instagram broadcast channel + WhatsApp Channel | Followers | New skill drops, free skill of the month, tips, launch news |
-| Members | WhatsApp Community (private) | Paying buyers | Help, weekly challenge, live sessions, early access, vote on new skills |
-
-Why WhatsApp: your audience already lives there, and the product itself (cuttit on WhatsApp) will too.
-If it grows past ~1,000 members or needs more structure, move members to Discord or Skool.
-
-### Member community layout (WhatsApp Community groups)
-- **Announcements** (admins only): new skills, updates, live session times
-- **Start here:** the setup guide, rules, "post your first edit" prompt
-- **Help:** "my render fails" questions. Answer within 24 h; turn repeat questions into FAQ / skill fixes
-- **Showcase:** members post edits they made with the skills
-- **Requests:** members suggest and vote on the next skills
-
-### Weekly rhythm
-| Day | What |
-|-----|------|
-| Monday | New skill drop (from the batches in section 5) |
-| Wednesday | Weekly challenge: one skill + one theme ("map reel of your hometown") |
-| Friday | Live session (30 min, Instagram Live or Google Meet): build one edit live, answer questions |
-| Sunday | Best 3 challenge edits reposted on cuttit's Instagram, with credit |
-
-### Why it grows the business
-- Members' edits = free content for cuttit's Instagram (always ask permission and credit them).
-- Requests tell you which skills to build next.
-- Help questions show where a skill is unclear; fix the `SKILL.md`, and everyone gets the update.
-- The most active members become the WhatsApp service's first beta testers, and later affiliates
-  (a referral link with 20-30% commission through Razorpay / Gumroad affiliates).
-
-### Rules (pinned in Start here)
-1. Be kind; no spam or self-promotion outside Showcase.
-2. Don't share the skill files outside the community.
-3. Credit other members if you reuse their idea.
-4. Only post content you have the rights to; no one else's videos.
-Admins: you + 1 helper once the community passes ~200 members.
-
-### What to measure
-- % of buyers who join the community (target: 60%+)
-- Weekly challenge entries
-- Help questions answered within 24 h
-- Members who buy again or upgrade to all access
-
-## 11. Protecting the product
-- Make the GitHub repo **private** (it's public now).
-- Skills are delivered only after payment, through the checkout's download link.
-- A short licence in every download: use it for your own and your clients' videos; don't resell or share the files.
-- Accept that some sharing will happen. Updates and new skills for all-access buyers are what keep people paying.
-
-## 12. How this connects to the WhatsApp service
-The skill library is the service's editing engine. Each skill becomes an edit style a WhatsApp user can pick:
-"send a video + reply 7 for map reel". Building 60 skills now is building the service's menu.
-
-## 13. Timeline
-| When | Goal |
+## 9. Daily routine (you)
+| Time | Task |
 |------|------|
-| Day 1-2 | Restructure the repo (section 4), templates, `catalog.json`, sort the 12 existing skills |
-| Day 2-3 | Store site with catalog + product pages; payment links; set up WhatsApp Channel + member Community |
-| Week 1-2 | Batches 1-2 (20 skills + demos). Start posting |
-| Week 2-3 | Batches 3-4 (40 skills). Launch all access |
-| Week 3-4 | Batches 5-6 (60 skills). Start the WhatsApp service beta (see ROADMAP.md) |
+| Morning | Post reel 1; reply to comments and DMs; check new orders |
+| Midday | Edit service orders (max 15/day) |
+| Afternoon | Make 3-5 new demo clips; post reel 2 |
+| Evening | 1 h local-business outreach; post reel 3; Help group |
 
-## 14. Decisions needed from you
-1. Prices: OK with the ladder in section 7?
-2. Checkout: Razorpay (best for UPI and India) or Gumroad (easiest, worldwide)?
-3. The 20 video styles + 20 motion graphics list, in batches of 10.
-4. The WhatsApp number to run the community from (best: a separate business number)
-5. Which AI talking-head tool you'll use, so I can check its commercial-use terms.
+## 10. Rules that protect the business
+- Make the GitHub repo private, so the skills can't be downloaded free.
+- Only promise what exists before 6 Dec. No "lifetime".
+- AI talking heads: check the tool allows commercial use; label as AI on Instagram; no look-alikes of real people.
+- Client videos: use them only for their edit, and post them only with permission. Delete after 30 days.
+- A refund policy on the site (e.g. 7 days if a skill doesn't work for you). It builds trust and costs little.
+
+## 11. Decisions needed from you (to start today)
+1. Checkout: **Razorpay** (UPI, India) or **Gumroad** (easiest, worldwide)?
+2. The WhatsApp Business number for the service and the community.
+3. Your Instagram handle and current follower count (to set realistic targets).
+4. The first 8 styles for the new skills.
+5. OK with the prices in section 2?
