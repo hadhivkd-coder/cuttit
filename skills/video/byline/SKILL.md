@@ -117,7 +117,20 @@ the style's defaults.
 - Music (optional, user-supplied, 85-95 BPM, calm): 26 dB under the voice, ducked with
   `sidechaincompress=threshold=0.02:ratio=8:attack=5:release=250`.
 
-## 5. Render
+## 5. Render (tested scripts included)
+Use the scripts in `scripts/` instead of writing a renderer from scratch:
+- Setup once: `pip install faster-whisper numpy pillow "opencv-python-headless<5"` and ffmpeg on PATH.
+  Put the two fonts in `fonts/` next to the plan (`InterTight.ttf`, `InstrumentSerif-Italic.ttf`).
+- Transcribe: decode audio first (`ffmpeg -i input.mp4 -ac 1 -ar 16000 -f s16le a.raw`) and pass the numpy array to
+  faster-whisper; this avoids a PyAV version clash. If the model download fails on a "xet" error, set `HF_HUB_DISABLE_XET=1`.
+- Write `plan.json` in the format of `scripts/plan.example.json` (all times in the source video's seconds).
+- Render: `python scripts/render.py plan.json` - cuts dead air, punch-ins with zoom-blur + flash, B&W segments,
+  captions with ghost lines, word cards, chips, CTA, generated SFX (`scripts/sfx.py`), loudness-normalised voice.
+- If the source has a required watermark (e.g. AI video generators), set `zoom_anchor` to the watermark's position
+  so punch-ins never crop it.
+If the user wants something the scripts don't do (b-roll, music, new elements from section 6), extend `render.py`.
+
+### Manual details (for extending the scripts)
 - Draw overlays (captions, cards, chips, CTA) as transparent PNG frames with Pillow, or as HTML/CSS captured with Playwright.
 - Composite with ffmpeg in one pass: scaled/cut base video, zoom-blur transitions, B&W segments
   (`hue=s=0`), overlays, mixed audio.
