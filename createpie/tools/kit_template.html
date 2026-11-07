@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cuttit CreatePie Copy Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* Layout: one narrow column of copy blocks, grouped by lesson, built for a phone. */
+  :root {
+    --bg:#ffffff; --ink:#0f0f10; --muted:#66666e; --line:#e8e8ec; --soft:#f5f6fa; --accent:#3d5afe; --done:#1a8f5a;
+    --display: Inter, system-ui, -apple-system, sans-serif; --body: Inter, system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg:#0e0f12; --ink:#f1f1f4; --muted:#9c9ca6; --line:#24252b; --soft:#17181d; --accent:#7d90ff; --done:#4cc68a; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg:#0e0f12; --ink:#f1f1f4; --muted:#9c9ca6; --line:#24252b; --soft:#17181d; --accent:#7d90ff; --done:#4cc68a; color-scheme: dark; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--body); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .col { max-width:640px; margin:0 auto; padding:24px 16px 80px; display:flex; flex-direction:column; gap:28px; }
+  header { display:flex; flex-direction:column; gap:10px; }
+  .eyebrow { font-size:12px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; color:var(--accent); }
+  h1 { font-family:var(--display); font-size:34px; font-weight:900; letter-spacing:-1.2px; line-height:1.05; text-wrap:balance; }
+  .intro { color:var(--muted); font-size:15px; }
+  .progress { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:var(--muted); }
+  .bar { flex:1; height:6px; border-radius:99px; background:var(--line); overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; background:var(--done); transition:width .2s; }
+  nav.jump { display:flex; gap:6px; flex-wrap:wrap; }
+  nav.jump a { font-size:12px; font-weight:700; color:var(--ink); text-decoration:none; border:1px solid var(--line); border-radius:99px; padding:5px 10px; }
+  nav.jump a.done { border-color:var(--done); color:var(--done); }
+  section { display:flex; flex-direction:column; gap:10px; scroll-margin-top:12px; }
+  section h2 { font-size:20px; font-weight:900; letter-spacing:-0.4px; }
+  .block { border:1px solid var(--line); border-radius:14px; background:var(--soft); overflow:hidden; }
+  .block.copied { border-color:var(--done); }
+  .bhead { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); background:var(--bg); }
+  .label { font-size:13px; font-weight:800; }
+  .label small { display:block; font-weight:500; color:var(--muted); font-size:12px; }
+  button.copy { font:inherit; font-size:14px; font-weight:800; border:0; border-radius:10px; padding:9px 16px; background:var(--ink); color:var(--bg); cursor:pointer; min-width:84px; }
+  button.copy:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  .block.copied button.copy { background:var(--done); color:#fff; }
+  pre { font-family:var(--body); font-size:14px; white-space:pre-wrap; word-break:break-word; padding:12px; max-height:220px; overflow:auto; color:var(--ink); }
+  pre.code { font-family:var(--mono); font-size:12.5px; }
+  .toast { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:10px 16px; border-radius:10px; font-size:14px; font-weight:700; opacity:0; pointer-events:none; transition:opacity .2s; }
+  .toast.show { opacity:1; }
+  .reset { align-self:flex-start; font:inherit; font-size:13px; color:var(--muted); background:none; border:0; text-decoration:underline; cursor:pointer; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="col">
+  <header>
+    <div class="eyebrow">CreatePie setup · cuttit Skill Pack</div>
+    <h1>Tap Copy, then paste into CreatePie.</h1>
+    <p class="intro">Go top to bottom. Each box is one field in CreatePie. Copied boxes turn green, so you can see where you left off.</p>
+    <div class="progress"><span id="count">0 / 0 copied</span><div class="bar"><i id="fill"></i></div></div>
+    <nav class="jump" id="jump"></nav>
+  </header>
+  <main id="groups" style="display:flex;flex-direction:column;gap:28px"></main>
+  <button class="reset" id="reset" type="button">Clear progress</button>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+const ITEMS = /*DATA*/[];
+const KEY = "cuttit_copykit_done";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { done = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
+
+const groups = [];
+ITEMS.forEach(([g, label, text], i) => {
+  let grp = groups.find(x => x.name === g);
+  if (!grp) { grp = { name: g, items: [] }; groups.push(grp); }
+  grp.items.push({ i, label, text });
+});
+
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+document.getElementById("groups").innerHTML = groups.map(grp => {
+  const title = grp.items.find(x => x.label === "Lesson title");
+  const heading = grp.name + (title ? ": " + title.text : "");
+  return `<section id="${slug(grp.name)}"><h2>${esc(heading)}</h2>` + grp.items.map(it => {
+    const isSkill = it.label.startsWith("Skill text");
+    const [main, sub] = isSkill ? ["Skill text", it.label.replace(/^Skill text \(|\)$/g, "")] : [it.label, ""];
+    return `<div class="block" data-i="${it.i}">
+      <div class="bhead"><div class="label">${esc(main)}${sub ? `<small>${esc(sub)}</small>` : ""}</div>
+      <button class="copy" type="button" id="copy-${it.i}">Copy</button></div>
+      <pre class="${isSkill ? "code" : ""}">${esc(it.text)}</pre></div>`;
+  }).join("") + `</section>`;
+}).join("");
+
+document.getElementById("jump").innerHTML = groups.map(g => `<a href="#${slug(g.name)}" data-g="${esc(g.name)}">${esc(g.name.replace("Course settings", "Course"))}</a>`).join("");
+
+function refresh() {
+  const n = Object.keys(done).length, total = ITEMS.length;
+  document.getElementById("count").textContent = `${n} / ${total} copied`;
+  document.getElementById("fill").style.width = (100 * n / total) + "%";
+  document.querySelectorAll(".block").forEach(b => {
+    const ok = !!done[b.dataset.i];
+    b.classList.toggle("copied", ok);
+    b.querySelector("button").textContent = ok ? "Copied" : "Copy";
+  });
+  document.querySelectorAll("#jump a").forEach(a => {
+    const g = groups.find(x => x.name === a.dataset.g);
+    a.classList.toggle("done", g.items.every(it => done[it.i]));
+  });
+}
+
+let t;
+function toast(msg) { const el = document.getElementById("toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(t); t = setTimeout(() => el.classList.remove("show"), 1600); }
+
+document.getElementById("groups").addEventListener("click", async e => {
+  const btn = e.target.closest("button.copy"); if (!btn) return;
+  const i = btn.closest(".block").dataset.i;
+  try {
+    await navigator.clipboard.writeText(ITEMS[i][2]);
+    done[i] = 1; save(); refresh(); toast("Copied. Now paste it in CreatePie.");
+  } catch (err) {
+    const pre = btn.closest(".block").querySelector("pre");
+    const r = document.createRange(); r.selectNodeContents(pre);
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    toast("Copy was blocked. The text is selected: long-press and choose Copy.");
+  }
+});
+document.getElementById("reset").addEventListener("click", () => { done = {}; save(); refresh(); });
+refresh();
+</script>
+</body>
+</html>
