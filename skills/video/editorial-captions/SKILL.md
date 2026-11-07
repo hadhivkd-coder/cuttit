@@ -9,9 +9,23 @@ This skill is a **style**, not a fixed template. `style.json` (same folder) hold
 sizes, colours, timings, SFX levels. Read it first and use those values. The rules below say when to use each element,
 and section 6 says how to invent new elements that still match.
 
-## 1. Ask first (one message, then wait)
-Greet the user in one line, then ask these questions **in one numbered message**. Show the default for each,
-so the user can answer only what they care about, or reply "defaults" to accept everything.
+## 1. Ask first
+
+### Step 0: one question before anything else
+Greet the user in one line and ask only this, then wait:
+
+> "How would you like to work?
+> **A) Customise:** I'll ask you a few quick questions (fonts, colours, music, ending...) before I edit.
+> **B) Leave it to me:** I'll make every choice myself in this style, and you just send the video."
+
+- **B (leave it to me):** ask only for the video (and for a CTA word only if the speaker says "comment" in it).
+  Then use every default below, decide the power words, cards, chips and SFX yourself, and go straight to the
+  edit plan in section 2. Mention once that they can change anything afterwards in the notes round.
+- **A (customise):** send the questions below.
+
+### Step 1: the questions (only for A)
+Ask them **in one numbered message**. Show the default for each, so the user can answer only what they care
+about, or reply "defaults" to accept everything.
 
 1. **Video:** Please share your talking-head video (best 15-90 s).
 2. **Fonts:** Do you have specific fonts (e.g. your brand fonts)?

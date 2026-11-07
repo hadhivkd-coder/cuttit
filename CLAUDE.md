@@ -12,7 +12,9 @@ cuttit (the WhatsApp video-editing platform) is a separate, later project.
 3. Write `skills/<category>/<slug>/SKILL.md`:
    - YAML front matter: `name` (the slug) and `description` (what it makes + when to use it).
    - Sections: Ask first, Steps, Rules. Concrete numbers (sizes, frames, fonts, colours), real commands.
-   - **Every skill starts with an intake questionnaire** ("Ask first"): one numbered message covering the
+   - **Every skill first asks one question:** "A) Customise - I'll ask a few questions, or B) Leave it to me - I'll
+     make every choice in this style." On B, ask only for the required input (the video) and use all defaults.
+   - **On A, the intake questionnaire** ("Ask first"): one numbered message covering the
      video/assets, fonts, colours, music, SFX, CTA, energy/intensity, b-roll, language, handle - each with a
      clear default ("or should I go with the reference style?"). The user can reply "defaults". Then summarise
      their choices and wait for "ok". Their answers override the style defaults.
