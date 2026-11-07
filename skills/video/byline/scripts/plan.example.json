@@ -1,244 +1,258 @@
 {
-  "source": "input.mp4",
-  "out": "byline.mp4",
-  "font_dir": "fonts",
-  "zoom_anchor": [
-    900,
-    1740
-  ],
-  "cuts": [
-    [
-      4.22,
-      4.44
-    ]
-  ],
-  "scales": [
-    [
-      0,
-      1.0
-    ],
-    [
-      1.7,
-      1.08
-    ],
-    [
-      4.44,
-      1.0
-    ],
-    [
-      5.4,
-      1.08
-    ],
-    [
-      6.58,
-      1.0
-    ],
-    [
-      7.72,
-      1.08
-    ],
-    [
-      8.54,
-      1.0
-    ],
-    [
-      9.2,
-      1.08
-    ]
-  ],
-  "captions": [
-    {
-      "t0": 0.0,
-      "t1": 0.58,
-      "words": [
-        "I've",
-        "audited"
-      ],
-      "power": [
-        1
-      ]
-    },
-    {
-      "t0": 0.58,
-      "t1": 1.02,
-      "words": [
-        "top",
-        "tier"
-      ]
-    },
-    {
-      "t0": 1.02,
-      "t1": 1.7,
-      "words": [
-        "personal",
-        "brands"
-      ],
-      "power": [
-        1
-      ]
-    },
-    {
-      "t0": 1.7,
-      "t1": 2.06,
-      "words": [
-        "and",
-        "their"
-      ]
-    },
-    {
-      "t0": 2.06,
-      "t1": 2.64,
-      "words": [
-        "biggest",
-        "secret"
-      ],
-      "power": [
-        1
-      ]
-    },
-    {
-      "t0": 4.44,
-      "t1": 5.04,
-      "words": [
-        "Nobody",
-        "cares"
-      ],
-      "power": [
-        0
-      ]
-    },
-    {
-      "t0": 5.04,
-      "t1": 5.4,
-      "words": [
-        "about",
-        "a"
-      ]
-    },
-    {
-      "t0": 5.4,
-      "t1": 6.0,
-      "words": [
-        "perfect",
-        "aesthetic"
-      ],
-      "power": [
-        1
-      ]
-    },
-    {
-      "t0": 6.0,
-      "t1": 6.58,
-      "words": [
-        "grid."
-      ]
-    },
-    {
-      "t0": 6.58,
-      "t1": 6.84,
-      "words": [
-        "Every"
-      ]
-    },
-    {
-      "t0": 7.72,
-      "t1": 8.54,
-      "words": [
-        "has",
-        "exactly"
-      ]
-    },
-    {
-      "t0": 8.54,
-      "t1": 9.2,
-      "words": [
-        "one"
-      ],
-      "power": [
-        0
-      ]
-    },
-    {
-      "t0": 9.2,
-      "t1": 9.54,
-      "words": [
-        "strategy",
-        "session"
-      ],
-      "power": [
-        1
-      ]
-    },
-    {
-      "t0": 9.54,
-      "t1": 10.03,
-      "words": [
-        "with",
-        "me."
-      ]
-    }
-  ],
-  "cards": [
-    {
-      "t0": 2.64,
-      "t1": 3.44,
-      "text": "nothing",
-      "bg": "black"
-    },
-    {
-      "t0": 3.44,
-      "t1": 4.22,
-      "text": "viral.",
-      "bg": "white"
-    }
-  ],
-  "bw": [
-    [
-      4.44,
-      6.58
-    ]
-  ],
-  "chips": [
-    {
-      "t0": 6.84,
-      "t1": 7.72,
-      "color": "blue",
-      "items": [
-        {
-          "t": 6.84,
-          "text": "Reels"
-        },
-        {
-          "t": 7.26,
-          "text": "Pinned posts"
-        }
-      ]
-    }
-  ],
-  "sfx": [
-    [
-      2.64,
-      "deep_whoosh"
-    ],
-    [
-      3.44,
-      "deep_whoosh"
-    ],
-    [
-      4.44,
-      "glitch"
-    ],
-    [
-      6.84,
-      "pop"
-    ],
-    [
-      7.26,
-      "pop"
-    ],
-    [
-      8.54,
-      "low_hit"
-    ]
+ "source": "input.mp4",
+ "out": "byline.mp4",
+ "font_dir": "fonts",
+ "cuts": [
+  [
+   4.22,
+   4.44
   ]
+ ],
+ "scales": [
+  [
+   0,
+   1.0
+  ],
+  [
+   1.7,
+   1.07
+  ],
+  [
+   4.44,
+   1.0
+  ],
+  [
+   5.4,
+   1.07
+  ],
+  [
+   6.58,
+   1.0
+  ],
+  [
+   7.72,
+   1.07
+  ],
+  [
+   8.54,
+   1.0
+  ],
+  [
+   9.2,
+   1.07
+  ]
+ ],
+ "captions": [
+  {
+   "t0": 0.0,
+   "t1": 0.58,
+   "words": [
+    "I've",
+    "audited"
+   ],
+   "power": [
+    1
+   ]
+  },
+  {
+   "t0": 0.58,
+   "t1": 1.02,
+   "words": [
+    "top",
+    "tier"
+   ]
+  },
+  {
+   "t0": 1.02,
+   "t1": 1.7,
+   "words": [
+    "personal",
+    "brands"
+   ],
+   "power": [
+    1
+   ]
+  },
+  {
+   "t0": 1.7,
+   "t1": 2.06,
+   "words": [
+    "and",
+    "their"
+   ]
+  },
+  {
+   "t0": 2.06,
+   "t1": 2.64,
+   "words": [
+    "biggest",
+    "secret"
+   ],
+   "power": [
+    1
+   ]
+  },
+  {
+   "t0": 4.44,
+   "t1": 5.04,
+   "words": [
+    "Nobody",
+    "cares"
+   ],
+   "power": [
+    0
+   ]
+  },
+  {
+   "t0": 5.04,
+   "t1": 5.4,
+   "words": [
+    "about",
+    "a"
+   ]
+  },
+  {
+   "t0": 5.4,
+   "t1": 6.0,
+   "words": [
+    "perfect",
+    "aesthetic"
+   ],
+   "power": [
+    1
+   ]
+  },
+  {
+   "t0": 6.0,
+   "t1": 6.58,
+   "words": [
+    "grid."
+   ]
+  },
+  {
+   "t0": 6.58,
+   "t1": 6.84,
+   "words": [
+    "Every"
+   ]
+  },
+  {
+   "t0": 7.72,
+   "t1": 8.54,
+   "words": [
+    "has",
+    "exactly"
+   ],
+   "power": [
+    1
+   ]
+  },
+  {
+   "t0": 9.2,
+   "t1": 9.54,
+   "words": [
+    "strategy",
+    "session"
+   ],
+   "power": [
+    1
+   ]
+  },
+  {
+   "t0": 9.54,
+   "t1": 10.03,
+   "words": [
+    "with",
+    "me."
+   ]
+  }
+ ],
+ "cards": [
+  {
+   "t0": 2.64,
+   "t1": 3.44,
+   "text": "nothing",
+   "bg": "black"
+  },
+  {
+   "t0": 3.44,
+   "t1": 4.22,
+   "text": "viral.",
+   "bg": "white"
+  }
+ ],
+ "bw": [
+  [
+   4.44,
+   6.58
+  ]
+ ],
+ "chips": [
+  {
+   "t0": 6.84,
+   "t1": 7.72,
+   "color": "blue",
+   "items": [
+    {
+     "t": 6.84,
+     "text": "Reels"
+    },
+    {
+     "t": 7.26,
+     "text": "Pinned posts"
+    }
+   ]
+  }
+ ],
+ "sfx": [
+  [
+   2.64,
+   "deep_whoosh"
+  ],
+  [
+   3.44,
+   "deep_whoosh"
+  ],
+  [
+   4.44,
+   "glitch"
+  ],
+  [
+   6.84,
+   "pop"
+  ],
+  [
+   7.26,
+   "pop"
+  ],
+  [
+   8.54,
+   "low_hit"
+  ],
+  [
+   8.54,
+   "deep_whoosh"
+  ]
+ ],
+ "words_file": "words.json",
+ "music": "generated",
+ "bpm": 90,
+ "stats": [
+  {
+   "t0": 8.54,
+   "t1": 9.2,
+   "text": "1",
+   "label": "strategy session",
+   "px": 380
+  }
+ ],
+ "zoom_anchor": [
+  900,
+  1740
+ ],
+ "style": {
+  "camera": {
+   "push_per_s": 0.008
+  }
+ }
 }

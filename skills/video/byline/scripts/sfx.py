@@ -92,7 +92,53 @@ def low_hit(dur=0.6):
     return _norm(x, -1)
 
 
+def riser(dur=0.5):
+    n = int(SR * dur); t = np.arange(n) / SR
+    noise = _sweep_bandpass(_pink(n), 400, 6000, up_frac=0.98)
+    tone = np.sin(2 * np.pi * np.cumsum(200 * (4 ** (t / dur))) / SR) * 0.25
+    env = (t / dur) ** 2.2
+    return _norm((_norm(noise, -2) + tone) * env, -1)
+
+
+def music_bed(seconds, bpm=90, seed=3):
+    """Soft original lo-fi bed: warm chord pad + soft kick + quiet hats + vinyl hiss."""
+    r = np.random.default_rng(seed)
+    n = int(SR * seconds); t = np.arange(n) / SR
+    beat = 60 / bpm; bar = beat * 4
+    chords = [[57, 60, 64, 67], [53, 57, 60, 64], [48, 52, 55, 59], [55, 59, 62, 65]]  # Am7 Fmaj7 Cmaj7 G7
+    hz = lambda m: 440 * 2 ** ((m - 69) / 12)
+    pad = np.zeros(n)
+    for b in range(int(seconds / bar) + 1):
+        s0 = int(b * bar * SR); s1 = min(int((b + 1) * bar * SR), n)
+        if s0 >= n: break
+        tt = np.arange(s1 - s0) / SR
+        env = np.minimum(tt / 0.4, 1) * np.minimum((bar - tt) / 0.3, 1)
+        for m in chords[b % 4]:
+            f = hz(m)
+            pad[s0:s1] += env * (np.sin(2 * np.pi * f * tt) + 0.3 * np.sin(2 * np.pi * 2 * f * tt + 0.5)) * 0.12
+    # gentle low-pass (one-pole)
+    lp = np.zeros(n); a = 0.06
+    for i in range(1, n): lp[i] = lp[i - 1] + a * (pad[i] - lp[i - 1])
+    drums = np.zeros(n)
+    k = low_hit(0.35) * 0.55
+    for i in range(int(seconds / beat) + 1):
+        s0 = int(i * beat * SR)
+        if s0 >= n: break
+        if i % 4 in (0, 2):
+            e = min(len(k), n - s0); drums[s0:s0 + e] += k[:e]
+        for h in (0, 0.5):
+            hs = int((i + h) * beat * SR)
+            if hs < n:
+                L = min(int(0.03 * SR), n - hs)
+                drums[hs:hs + L] += r.standard_normal(L) * np.exp(-np.arange(L) / (0.006 * SR)) * 0.05
+    hiss = r.standard_normal(n) * 0.004
+    x = lp * 1.0 + drums + hiss
+    fade = np.minimum(np.minimum(t / 0.8, 1), np.minimum((seconds - t) / 1.0, 1))
+    return _norm(x * fade, -1)
+
+
 PALETTE = {
+    "riser": riser,
     "deep_whoosh": lambda: whoosh(0.5, sub=True),
     "whoosh": lambda: whoosh(0.4),
     "pop": pop, "click": click, "glitch": glitch, "low_hit": low_hit,

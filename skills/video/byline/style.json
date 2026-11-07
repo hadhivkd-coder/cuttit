@@ -14,7 +14,7 @@
   "fonts": {
     "sans": {
       "family": "Inter Tight",
-      "weight": 600,
+      "weight": 720,
       "tracking": -0.03,
       "source": "Google Fonts (OFL)",
       "file": "InterTight.ttf"
@@ -49,8 +49,8 @@
       3
     ],
     "y_rule": "chin_y + 0.17*H, clamped to 0.44H..0.62H",
-    "sans_px": 74,
-    "serif_px": 136,
+    "sans_px": 82,
+    "serif_px": 150,
     "ghost_px": 50,
     "ghost_offset_px": -78,
     "shadow": "0 2px 6px rgba(0,0,0,0.6)",
@@ -158,7 +158,8 @@
       ],
       "blur": "radial"
     },
-    "max_unchanged_s": 3.0
+    "max_unchanged_s": 3.0,
+    "push_per_s": 0.012
   },
   "bw_punch": {
     "trigger": "negative / mistake / 'wrong' phrase",
@@ -190,16 +191,17 @@
         85,
         95
       ],
-      "level_db_under_voice": -26,
+      "level_db_under_voice": -17,
       "duck": "sidechain, fast attack"
     },
     "sfx_levels_db": {
-      "deep_whoosh": -14,
-      "whoosh": -17,
-      "pop": -18,
+      "deep_whoosh": -15,
+      "whoosh": -24,
+      "pop": -16,
       "click": -20,
-      "glitch": -18,
-      "low_hit": -15
+      "glitch": -19,
+      "low_hit": -13,
+      "riser": -22
     }
   },
   "pacing": {
@@ -211,5 +213,10 @@
       35,
       40
     ]
+  },
+  "grade": {
+    "ffmpeg": "eq=contrast=1.10:brightness=-0.015:saturation=1.10,unsharp=5:5:0.5",
+    "vignette": 0.28,
+    "grain": 3.5
   }
 }
