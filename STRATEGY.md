@@ -1,5 +1,5 @@
 # cuttit: 30-day sprint strategy
-**International. Priced in local currency. Runs 7 Nov to 6 Dec 2026. Goal: as much revenue as possible in 30 days, then close and start the next program.**
+**International. Priced per market. Runs 7 Nov to 6 Dec 2026. Goal: as much revenue as possible in 30 days, then close and start the next program.**
 
 ## 1. Why a sprint
 After about a month, "Claude makes your reels" stops being new and anyone can write these skills themselves.
@@ -10,36 +10,44 @@ Two products:
 1. **Skill pack:** all the editing skills, sold until 6 Dec.
 2. **Editing service:** send a video on WhatsApp, get an edited reel back. Starts **14 Nov**.
 
-## 2. The offer (international, priced in local currency)
-Visitors see prices in their own currency, picked from their location (they can switch it in the top bar).
-Prices are **set per currency as round local numbers**, not live conversions, so a Saudi visitor sees SAR 69, not SAR 71.25.
-The table lives in `site/pricing.js`; change prices there.
+## 2. The offer (priced per market)
+Each market pays its own **market price**: what people there already pay for reel editing and creator packs.
+It is not one price converted into other currencies. The site picks the visitor's market from their location
+(they can switch it in the top bar). The table lives in `site/pricing.js`.
+
+**How the service prices were set:** a little below a mid-level freelance editor in each market. We're faster
+(AI-assisted, 24 h), but not budget-marketplace cheap.
+Market rates found (Nov 2026, from published rate guides and freelancer listings, so rough):
+- US: about $30-100 per simple reel, $100-300 branded; monthly plans about $300-3,000.
+- India: about ₹100-500 budget, ₹800-2,500 mid-level per reel.
+- Gulf: little public data; quotes seen at about $100-500 per reel (in USD) and SAR 3,000-8,000 for shoot-day packages.
+  **Test Gulf prices in week 1 and raise them if they sell easily.**
 
 ### Skill pack (sold until 6 Dec; price rises each week, and that's real)
-| Currency | 7-13 Nov | 14-20 Nov | 21 Nov-6 Dec | Single skill |
-|----------|---------|-----------|--------------|--------------|
-| USD (US + everywhere else) | $19 | $25 | $29 | $5 |
-| CAD (Canada) | C$25 | C$35 | C$39 | C$7 |
-| GBP (UK) | £15 | £19 | £23 | £4 |
-| EUR (Eurozone) | €17 | €23 | €27 | €5 |
-| AUD (Australia) | A$29 | A$39 | A$45 | A$8 |
-| SAR (Saudi Arabia) | SAR 69 | SAR 89 | SAR 109 | SAR 19 |
-| AED (UAE) | AED 69 | AED 89 | AED 109 | AED 19 |
-| INR (India) | ₹299 | ₹399 | ₹499 | ₹49 |
+| Market | 7-13 Nov | 14-20 Nov | 21 Nov-6 Dec | Single skill |
+|--------|---------|-----------|--------------|--------------|
+| US + rest of world (USD) | $29 | $39 | $49 | $7 |
+| Canada (CAD) | C$39 | C$49 | C$65 | C$9 |
+| UK (GBP) | £24 | £29 | £39 | £6 |
+| Eurozone (EUR) | €27 | €35 | €45 | €6 |
+| Australia (AUD) | A$45 | A$59 | A$75 | A$10 |
+| Saudi Arabia (SAR) | SAR 99 | SAR 129 | SAR 179 | SAR 25 |
+| UAE (AED) | AED 99 | AED 129 | AED 179 | AED 25 |
+| India (INR) | ₹299 | ₹399 | ₹499 | ₹49 |
 
 - Don't promise "lifetime updates". Promise "every skill released before 6 Dec".
 
 ### Editing service (from 14 Nov)
-| Currency | Single reel | 10 reels | Monthly (30 reels) |
-|----------|-------------|----------|--------------------|
-| USD | $29 | $199 | $499 |
-| CAD | C$39 | C$269 | C$679 |
-| GBP | £23 | £159 | £399 |
-| EUR | €27 | €179 | €459 |
-| AUD | A$45 | A$299 | A$759 |
-| SAR | SAR 109 | SAR 749 | SAR 1,879 |
-| AED | AED 109 | AED 729 | AED 1,829 |
-| INR | ₹299 | ₹1,999 | ₹4,999 |
+| Market | Single reel | 10 reels | Monthly (30 reels) |
+|--------|-------------|----------|--------------------|
+| US + rest of world | $39 | $299 | $799 |
+| Canada | C$49 | C$399 | C$1,049 |
+| UK | £29 | £229 | £629 |
+| Eurozone | €35 | €279 | €749 |
+| Australia | A$59 | A$449 | A$1,199 |
+| Saudi Arabia | SAR 149 | SAR 1,099 | SAR 2,799 |
+| UAE | AED 149 | AED 1,099 | AED 2,799 |
+| India | ₹499 | ₹3,999 | ₹9,999 |
 
 Skill-pack buyers get their first edited reel free.
 
@@ -50,6 +58,8 @@ and local payment methods, file the taxes, and pay you out to your Indian bank a
 
 | Option | Good | Watch out |
 |--------|------|-----------|
+In plain words: it's the shop's checkout and cashier. The customer pays them, they handle the tax, and they send you the money.
+
 | **Paddle** (recommended) | MoR; you can set a fixed price per currency/country, which matches our table | Reviews your site and product before approval; apply on day 1 |
 | **Lemon Squeezy** | MoR; very easy for digital downloads | Check whether it supports fixed per-currency prices; if it converts from USD, checkout amounts may differ slightly from the site |
 | Razorpay International / Stripe | Lower fees | **Not** MoR: you handle foreign taxes yourself |
@@ -101,12 +111,12 @@ Check them every Sunday and adjust.
 
 | Source | Target | Revenue |
 |--------|--------|---------|
-| Skill packs | 300 sales at ~$20 average | ~$6,000 |
-| Single skills | 300 sales at $5 | ~$1,500 |
-| Service: single reels | 60 at $29 | ~$1,740 |
-| Service: 10-reel packs | 20 at $199 | ~$3,980 |
-| Service: monthly clients | 10 at $499 | ~$4,990 |
-| **Total** | | **~$18,000** |
+| Skill packs | 300 sales at ~$25 average (mix of markets) | ~$7,500 |
+| Single skills | 300 sales at ~$6 | ~$1,800 |
+| Service: single reels | 60 at ~$39 | ~$2,340 |
+| Service: 10-reel packs | 20 at ~$299 | ~$5,980 |
+| Service: monthly clients | 10 at ~$799 | ~$7,990 |
+| **Total** | | **~$25,600** |
 
 Minus the payment provider's fee (roughly 5% + a small fixed fee per sale for MoR providers) and AI tool costs.
 

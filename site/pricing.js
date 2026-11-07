@@ -1,20 +1,21 @@
 // cuttit regional pricing.
-// Prices are set per currency as round local numbers (not live conversions).
+// Prices are set per market, from what that market already pays (not currency conversions).
 // Edit this table to change prices. The checkout must charge the same amounts:
 // set the same per-currency prices in the payment provider.
 
 window.CUTTIT_PRICING = (() => {
   // pack: price by sprint week [7-13 Nov, 14-20 Nov, 21 Nov-6 Dec]
   // skill: one skill. reel / ten / month: editing service packages.
+  // Set from what each market already pays (freelance reel rates, creator template packs), Nov 2026.
   const PRICES = {
-    USD: { pack: [19, 25, 29],    skill: 5,  reel: 29,  ten: 199,  month: 499 },
-    CAD: { pack: [25, 35, 39],    skill: 7,  reel: 39,  ten: 269,  month: 679 },
-    GBP: { pack: [15, 19, 23],    skill: 4,  reel: 23,  ten: 159,  month: 399 },
-    EUR: { pack: [17, 23, 27],    skill: 5,  reel: 27,  ten: 179,  month: 459 },
-    AUD: { pack: [29, 39, 45],    skill: 8,  reel: 45,  ten: 299,  month: 759 },
-    SAR: { pack: [69, 89, 109],   skill: 19, reel: 109, ten: 749,  month: 1879 },
-    AED: { pack: [69, 89, 109],   skill: 19, reel: 109, ten: 729,  month: 1829 },
-    INR: { pack: [299, 399, 499], skill: 49, reel: 299, ten: 1999, month: 4999 }
+    USD: { pack: [29, 39, 49],     skill: 7,  reel: 39,  ten: 299,  month: 799 },
+    CAD: { pack: [39, 49, 65],     skill: 9,  reel: 49,  ten: 399,  month: 1049 },
+    GBP: { pack: [24, 29, 39],     skill: 6,  reel: 29,  ten: 229,  month: 629 },
+    EUR: { pack: [27, 35, 45],     skill: 6,  reel: 35,  ten: 279,  month: 749 },
+    AUD: { pack: [45, 59, 75],     skill: 10, reel: 59,  ten: 449,  month: 1199 },
+    SAR: { pack: [99, 129, 179],   skill: 25, reel: 149, ten: 1099, month: 2799 },
+    AED: { pack: [99, 129, 179],   skill: 25, reel: 149, ten: 1099, month: 2799 },
+    INR: { pack: [299, 399, 499],  skill: 49, reel: 499, ten: 3999, month: 9999 }
   };
 
   // Sprint dates (UTC). Pack sales stop at the end of 6 Dec.
