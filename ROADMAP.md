@@ -4,15 +4,15 @@
 **Funnel:** free skills -> followers -> paid skill pack -> WhatsApp editing service.
 
 ## Phase 1: Week 1, sell the skills
-- [x] 10 skills in `skills/`
+- [x] 12 skills in `skills/`
 - [x] 2-day posting plan in `PLAN.md`
 - [x] Landing page in `site/index.html`
 - [ ] Make the 10 reels with the skills, and post them over 2 days
 - [ ] ManyChat comment-to-DM for each keyword (free skill link)
-- [ ] Paid pack product on Gumroad or Razorpay Payment Pages (Rs 499). Put the link in `site/index.html` (`LINKS.pack`)
+- [ ] Paid pack product on Gumroad or Razorpay Payment Pages (Rs 299). Put the link in `site/index.html` (`LINKS.pack`)
 - [ ] WhatsApp number for the waitlist (`LINKS.waitlist`) and the Instagram handle (`LINKS.instagram`)
 - [ ] Deploy `site/` (Vercel, Netlify or GitHub Pages; free)
-- [ ] Record the 10 walkthrough videos promised on the pricing card
+- [x] Setup guide (`SETUP.md`) promised on the pricing card
 
 ## Phase 2: Weeks 2-4, the WhatsApp editing service (MVP)
 

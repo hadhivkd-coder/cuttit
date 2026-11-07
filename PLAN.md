@@ -1,4 +1,4 @@
-# Reels Kit: 10 Claude skills, 10 reels, 2 days
+# Reels Kit: 12 Claude skills, 12 reels, 2 days
 
 Each reel shows one result Claude made, ends with **"Comment CLAUDE and I'll send you the skill"**,
 and a DM bot sends the free `SKILL.md`. Followers come from the free skills; money comes later from a paid pack.
@@ -52,7 +52,7 @@ Ask people to follow before the DM link opens ("Follow + I'll send it"). Don't m
 
 ## Selling after you reach 500+ followers
 - Free: one skill per reel, the way you've been giving them out.
-- Paid pack (Gumroad, Payhip, or Lemon Squeezy): all 10 skills + a video walkthrough + updates, about Rs 499 / $9 to launch.
+- Paid pack (Gumroad, Payhip, or Lemon Squeezy): all 12 skills + setup guide + updates, Rs 299.
 - Upsell: "I make the reel for you" as a done-for-you service for local businesses (photo-to-ad, website-scroll-reel).
 
 ## Be honest about it
