@@ -71,6 +71,12 @@
   details[open] summary::after { content:"–"; }
   details p { color:var(--muted); margin-top:10px; font-size:15px; }
 
+  #currency { font:inherit; font-size:13px; font-weight:700; border:1px solid var(--line); border-radius:8px; padding:6px 8px; background:#fff; }
+  .plans { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px; margin:6px 0 22px; }
+  .plan { background:#fff; border-radius:14px; padding:16px; }
+  .plan b { font-size:14px; }
+  .pamt { font-size:28px; font-weight:900; letter-spacing:-1px; margin:4px 0 2px; }
+  .plan span { font-size:13px; color:var(--muted); }
   footer { border-top:1px solid var(--line); padding:28px 0 48px; font-size:13px; color:var(--muted); }
 </style>
 </head>
@@ -78,16 +84,19 @@
 
 <nav><div class="col">
   <a class="logo" href="#">cutt<i>it</i></a>
-  <a class="nav-link" href="#get">Get the pack →</a>
+  <div class="row" style="gap:16px">
+    <select id="currency" aria-label="Currency"></select>
+    <a class="nav-link" href="#get">Get the pack →</a>
+  </div>
 </div></nav>
 
 <main class="col">
   <div class="hero">
-    <div class="eyebrow">12 Claude skills · ₹299</div>
+    <div class="eyebrow">12 Claude skills · <span data-price="pack"></span></div>
     <h1>Your reels,<br><span>edited by Claude.</span></h1>
     <p class="lead">12 ready-made skills that turn your clips, photos and ideas into finished reels. No After Effects, no timeline, no editing experience.</p>
     <div class="row">
-      <a class="btn dark" data-link="pack" href="#">Get all 12 for ₹299 →</a>
+      <a class="btn dark" data-link="pack" href="#">Get all 12 for <span data-price="pack"></span> →</a>
       <a class="btn ghost" href="#skills">See the skills</a>
     </div>
     <p class="note">One-time payment. Instant download.</p>
@@ -113,17 +122,17 @@
   <section id="get">
     <div class="eyebrow">Pricing</div>
     <h2>One pack. Everything.</h2>
-    <p class="sub">Less than the price of one hour of editing.</p>
+    <p class="sub">Less than the price of one hour of editing. <span id="next-price"></span></p>
     <div class="price">
-      <div class="top"><div class="amount">₹299</div><div class="chip">Launch price</div></div>
+      <div class="top"><div class="amount" data-price="pack"></div><div class="chip">Launch price</div></div>
       <ul class="check">
         <li>All 12 skill files</li>
         <li>A setup guide for Claude Code and the Claude app</li>
         <li>Every skill released before 6 Dec</li>
         <li>Your first edited reel from cuttit, free</li>
       </ul>
-      <a class="btn dark block" data-link="pack" href="#">Get the pack for ₹299 →</a>
-      <p class="note" style="text-align:center">Secure checkout · UPI and cards accepted</p>
+      <a class="btn dark block" data-link="pack" href="#">Get the pack for <span data-price="pack"></span> →</a>
+      <p class="note" style="text-align:center">Secure checkout · Cards, Apple Pay and Google Pay · Prices in your currency</p>
     </div>
   </section>
 
@@ -131,7 +140,12 @@
     <div class="wa">
       <div class="eyebrow">Opens 14 Nov</div>
       <h2>Send a video on WhatsApp.<br>Get it back edited.</h2>
-      <p class="sub">Captions, cuts, music and voice, done for you. No apps.</p>
+      <p class="sub">Captions, cuts, music and voice, done for you. No apps. Edited reel back within 24 hours.</p>
+      <div class="plans">
+        <div class="plan"><b>Single reel</b><div class="pamt" data-price="reel"></div><span>1 video, up to 60 s</span></div>
+        <div class="plan"><b>10 reels</b><div class="pamt" data-price="ten"></div><span>Use them any time this month</span></div>
+        <div class="plan"><b>Monthly</b><div class="pamt" data-price="month"></div><span>30 reels, 12 h priority</span></div>
+      </div>
       <a class="btn dark" data-link="waitlist" href="#">Join the waitlist on WhatsApp</a>
     </div>
   </section>
@@ -147,6 +161,7 @@
 
 <footer><div class="col">© <span id="y"></span> cuttit · <a data-link="instagram" href="#">Instagram</a> · Not affiliated with Anthropic. Claude is a trademark of Anthropic.</div></footer>
 
+<script src="pricing.js"></script>
 <script>
   // Fill these in before going live
   const LINKS = {
@@ -170,6 +185,17 @@
   ];
   document.getElementById("skill-list").innerHTML = SKILLS.map(s => `<li><div><b>${s[0]}</b><span>${s[1]}</span></div></li>`).join("");
   document.querySelectorAll("[data-link]").forEach(a => { a.href = LINKS[a.dataset.link]; a.target = "_blank"; a.rel = "noopener"; });
+  // Regional prices
+  const P = window.CUTTIT_PRICING, sel = document.getElementById("currency");
+  sel.innerHTML = P.currencies.map(c => `<option value="${c}">${c}</option>`).join("");
+  function render(cur) {
+    sel.value = cur;
+    document.querySelectorAll("[data-price]").forEach(el => { el.textContent = P.format(cur, P.price(cur, el.dataset.price)); });
+    const w = P.week(), next = P.PRICES[cur].pack[w + 1];
+    document.getElementById("next-price").textContent = next ? `Goes up to ${P.format(cur, next)} on ${["14 Nov", "21 Nov"][w]}.` : "Sales close 6 Dec.";
+  }
+  sel.addEventListener("change", () => { localStorage.setItem("cuttit_currency", sel.value); render(sel.value); });
+  render(P.detect());
   document.getElementById("y").textContent = new Date().getFullYear();
 </script>
 </body>
