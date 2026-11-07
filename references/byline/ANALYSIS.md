@@ -1,4 +1,4 @@
-# Reference analysis: editorial captions style
+# Reference analysis: Byline style
 
 Source: a 54 s Instagram reel the user shared (not stored in the repo).
 Combined from Claude's frame/audio measurements and a Gemini watch-and-listen breakdown.

@@ -1,9 +1,9 @@
 ---
-name: editorial-captions
+name: byline
 description: Edit a talking-head video in a premium "editorial captions" style - two-font word captions at chest level (clean sans + big italic serif power words), black/white full-screen word cards, glowing pill chips for lists, punch-in zoom-blur cuts, black-and-white punches, synced whoosh/pop SFX and a big "comment WORD" ending. Use when the user wants a high-end, fast-paced talking-head reel, "editorial" or "serif captions", or asks to edit a video "in this style". Also designs new on-screen elements that match the style.
 ---
 
-# Editorial Captions (style template)
+# Byline (style template)
 
 This skill is a **style**, not a fixed template. `style.json` (same folder) holds the exact numbers: fonts,
 sizes, colours, timings, SFX levels. Read it first and use those values. The rules below say when to use each element,

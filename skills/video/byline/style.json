@@ -1,5 +1,5 @@
 {
-  "name": "editorial-captions",
+  "name": "byline",
   "canvas": { "width": 1080, "height": 1920, "fps": 30, "safe_area": [0, 250, 1080, 1670] },
   "fonts": {
     "sans":  { "family": "Inter Tight", "weight": 600, "tracking": -0.03, "source": "Google Fonts (OFL)" },
