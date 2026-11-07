@@ -10,9 +10,38 @@ sizes, colours, timings, SFX levels. Read it first and use those values. The rul
 and section 6 says how to invent new elements that still match.
 
 ## 1. Ask first (one message, then wait)
-1. The talking-head video (any length; best 15-90 s).
-2. The CTA keyword for the ending (e.g. PARTNER), or "no CTA".
-3. Optional: b-roll clips / screenshots the user owns (proof of work, product, screen recordings), and a music track.
+Greet the user in one line, then ask these questions **in one numbered message**. Show the default for each,
+so the user can answer only what they care about, or reply "defaults" to accept everything.
+
+1. **Video:** Please share your talking-head video (best 15-90 s).
+2. **Fonts:** Do you have specific fonts (e.g. your brand fonts)?
+   Default: the reference style, a clean sans (Inter Tight) + an elegant italic serif (Instrument Serif).
+3. **Colours:** Do you want your brand colours for the chips and highlights?
+   Default: blue for good/right, red for bad/wrong, with black and white cards.
+4. **Music:** Do you want background music?
+   a) Your own track (send it) b) no music c) I suggest a calm 85-95 BPM track you can download free
+   (e.g. from the YouTube Audio Library) and you send it. Default: no music.
+5. **Sound effects:** Default: whooshes, pops and hits that I generate for you (no licence needed).
+   Or: send your own SFX pack, or "no SFX".
+6. **Ending:** Should it end with "comment [WORD]"? Which word? Default: no CTA.
+7. **Energy:** How intense should the edit be?
+   a) Calm (fewer cards and punch-ins) b) Standard (the reference) c) Hype (more cards, faster cuts). Default: Standard.
+8. **B-roll:** Any clips or screenshots of your own to include (proof of work, product, screen recordings)?
+   Default: none, typography only.
+9. **Language** of the captions, and any names or words I must spell exactly? Default: the spoken language.
+10. **Handle/watermark** at the end (e.g. @yourname)? Default: none.
+
+Then repeat back their choices as a short summary ("Fonts: yours - Poppins + Lora; Music: none; Energy: Hype...")
+and wait for "ok". Everything they chose **overrides** the matching value in `style.json`; everything else uses
+the style's defaults.
+
+**Applying the answers**
+- Their fonts: their sans replaces Inter Tight, their serif (or display font) replaces Instrument Serif.
+  Keep the same sizes, tracking and glow. If they give only one font, use it for captions and keep the serif for power words.
+- Their colours: the main brand colour replaces blue; keep red for "wrong" unless their brand colour is red
+  (then use their second colour or black for "wrong").
+- Energy: Calm = cards every 15-25 s, punch-ins every 2.5-3.5 s, no B&W punch.
+  Hype = cards every 5-10 s, punch-ins every 0.8-1.5 s, chips on every list.
 
 ## 2. Prepare
 1. Fonts: download Inter Tight and Instrument Serif (Google Fonts, free licence) into `fonts/`.
