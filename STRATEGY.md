@@ -100,27 +100,75 @@ Every demo video is also a reel. 40-60 products = 40-60 posts with no extra work
 - Collect emails on free downloads. Email list = launch list for the WhatsApp service.
 - Track which comment words win. Make more skills in those styles.
 
-## 10. Protecting the product
+## 10. Community
+The community is what makes people stay after they buy, and it's why all access is worth ₹499.
+
+### Two levels
+| Level | Where | Who | What they get |
+|-------|-------|-----|---------------|
+| Free | Instagram broadcast channel + WhatsApp Channel | Followers | New skill drops, free skill of the month, tips, launch news |
+| Members | WhatsApp Community (private) | Paying buyers | Help, weekly challenge, live sessions, early access, vote on new skills |
+
+Why WhatsApp: your audience already lives there, and the product itself (cuttit on WhatsApp) will too.
+If it grows past ~1,000 members or needs more structure, move members to Discord or Skool.
+
+### Member community layout (WhatsApp Community groups)
+- **Announcements** (admins only): new skills, updates, live session times
+- **Start here:** the setup guide, rules, "post your first edit" prompt
+- **Help:** "my render fails" questions. Answer within 24 h; turn repeat questions into FAQ / skill fixes
+- **Showcase:** members post edits they made with the skills
+- **Requests:** members suggest and vote on the next skills
+
+### Weekly rhythm
+| Day | What |
+|-----|------|
+| Monday | New skill drop (from the batches in section 5) |
+| Wednesday | Weekly challenge: one skill + one theme ("map reel of your hometown") |
+| Friday | Live session (30 min, Instagram Live or Google Meet): build one edit live, answer questions |
+| Sunday | Best 3 challenge edits reposted on cuttit's Instagram, with credit |
+
+### Why it grows the business
+- Members' edits = free content for cuttit's Instagram (always ask permission and credit them).
+- Requests tell you which skills to build next.
+- Help questions show where a skill is unclear; fix the `SKILL.md`, and everyone gets the update.
+- The most active members become the WhatsApp service's first beta testers, and later affiliates
+  (a referral link with 20-30% commission through Razorpay / Gumroad affiliates).
+
+### Rules (pinned in Start here)
+1. Be kind; no spam or self-promotion outside Showcase.
+2. Don't share the skill files outside the community.
+3. Credit other members if you reuse their idea.
+4. Only post content you have the rights to; no one else's videos.
+Admins: you + 1 helper once the community passes ~200 members.
+
+### What to measure
+- % of buyers who join the community (target: 60%+)
+- Weekly challenge entries
+- Help questions answered within 24 h
+- Members who buy again or upgrade to all access
+
+## 11. Protecting the product
 - Make the GitHub repo **private** (it's public now).
 - Skills are delivered only after payment, through the checkout's download link.
 - A short licence in every download: use it for your own and your clients' videos; don't resell or share the files.
 - Accept that some sharing will happen. Updates and new skills for all-access buyers are what keep people paying.
 
-## 11. How this connects to the WhatsApp service
+## 12. How this connects to the WhatsApp service
 The skill library is the service's editing engine. Each skill becomes an edit style a WhatsApp user can pick:
 "send a video + reply 7 for map reel". Building 60 skills now is building the service's menu.
 
-## 12. Timeline
+## 13. Timeline
 | When | Goal |
 |------|------|
 | Day 1-2 | Restructure the repo (section 4), templates, `catalog.json`, sort the 12 existing skills |
-| Day 2-3 | Store site with catalog + product pages; payment links |
+| Day 2-3 | Store site with catalog + product pages; payment links; set up WhatsApp Channel + member Community |
 | Week 1-2 | Batches 1-2 (20 skills + demos). Start posting |
 | Week 2-3 | Batches 3-4 (40 skills). Launch all access |
 | Week 3-4 | Batches 5-6 (60 skills). Start the WhatsApp service beta (see ROADMAP.md) |
 
-## 13. Decisions needed from you
+## 14. Decisions needed from you
 1. Prices: OK with the ladder in section 7?
 2. Checkout: Razorpay (best for UPI and India) or Gumroad (easiest, worldwide)?
 3. The 20 video styles + 20 motion graphics list, in batches of 10.
-4. Which AI talking-head tool you'll use, so I can check its commercial-use terms.
+4. The WhatsApp number to run the community from (best: a separate business number)
+5. Which AI talking-head tool you'll use, so I can check its commercial-use terms.
