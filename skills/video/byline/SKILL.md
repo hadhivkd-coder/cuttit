@@ -86,8 +86,8 @@ the style's defaults.
 - Contrast/quote pairs ("a cheap editor asks... / a great editor asks..."): red pill for the weak side, blue pill for the strong side.
 
 **Camera**
-- Change the shot every 1.2-2.5 s: alternate scale 100% / 112% on new clauses, never mid-word.
-- Every cut between scales is a 4-frame zoom-blur, followed by a small brightness flash that settles over 12 frames.
+- Default: slow, smooth, eased zooms (100% to ~107%) that change direction every 2-3 s. Never snap.
+- Transitions between scenes (cards, B&W, b-roll) use a 6-frame radial blur and a whoosh.
 - Nothing stays unchanged longer than 3 s (a punch-in, card, chip or b-roll counts as a change).
 
 **Black-and-white punch**
@@ -129,6 +129,23 @@ Use the scripts in `scripts/` instead of writing a renderer from scratch:
 - If the source has a required watermark (e.g. AI video generators), set `zoom_anchor` to the watermark's position
   so punch-ins never crop it.
 If the user wants something the scripts don't do (b-roll, music, new elements from section 6), extend `render.py`.
+
+
+### v3 options in plan.json (see scripts/plan.example.json)
+- `speed`: e.g. 0.9 slows the whole video and voice slightly for a calmer, premium pace.
+- `camera_mode: "smooth"` (default): only slow, eased zooms between `scales` keyframes. No snap punch-ins.
+  `"punch"` brings back fast punch-ins with bumps and shake for high-energy edits.
+- Radial-blur transitions are added automatically at every card, B&W and cutaway boundary (`camera.radial_strength`).
+- `cutaways`: slow-motion b-roll, from the user's b-roll file (`file`) or a crop of the source (`crop`), with `slowmo` and a slow zoom.
+- `graphics` (motion graphics in the style DNA):
+  - `counter`: a number counting up with a serif label, optional red strike-through (`strike_t`).
+  - `grid`: tiles popping in one by one, optional red X (`strike_t`).
+  - `button`: a blue pill button with a cursor that glides in and clicks (`click_t`).
+- `sfx_pack` + `sfx_map`: use the user's own SFX files per role: `{role: [file, max_seconds (negative = take the tail, for risers), level_db]}`.
+  Roles: deep_whoosh, whoosh, riser, pop, click, glitch, impact, shine, count, wrong, highlight. Without a pack, `sfx.py` generates them.
+  Whooshes on transitions, risers before word cards and a highlighter sound on power-word underlines are added automatically.
+  Never commit a user's SFX pack to a public repo.
+- `music`: "generated" (original bed from sfx.py), a file path, or null.
 
 ### Manual details (for extending the scripts)
 - Draw overlays (captions, cards, chips, CTA) as transparent PNG frames with Pillow, or as HTML/CSS captured with Playwright.

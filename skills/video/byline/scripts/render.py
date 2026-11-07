@@ -48,7 +48,8 @@ def ease_out(p):
 
 
 class TimeMap:
-    def __init__(self, cuts, dur):
+    def __init__(self, cuts, dur, speed=1.0):
+        self.speed = speed
         self.keep, t = [], 0.0
         for a, b in sorted(cuts):
             if a > t: self.keep.append((t, a))
@@ -58,13 +59,13 @@ class TimeMap:
     def __call__(self, ts):
         out = 0.0
         for a, b in self.keep:
-            if ts <= b: return out + max(ts - a, 0)
+            if ts <= b: return (out + max(ts - a, 0)) / self.speed
             out += b - a
-        return out
+        return out / self.speed
 
     @property
     def duration(self):
-        return sum(b - a for a, b in self.keep)
+        return sum(b - a for a, b in self.keep) / self.speed
 
 
 # ------------------------------------------------------------------ text
@@ -180,7 +181,8 @@ def main(plan_path):
     src = os.path.join(wd, plan["source"])
     fonts = Fonts(st, os.path.join(wd, plan.get("font_dir", "fonts")))
     dur = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", src]))
-    tm = TimeMap(plan.get("cuts", []), dur); T = tm
+    speed = plan.get("speed", 1.0)
+    tm = TimeMap(plan.get("cuts", []), dur, speed); T = tm
     cs, cam, gr = st["captions"], st["camera"], st.get("grade", {})
 
     # 1) base: cut dead air, grade, 1080x1920@30
@@ -189,8 +191,8 @@ def main(plan_path):
         vf.append(f"[0:v]trim={a}:{b},setpts=PTS-STARTPTS[v{i}]"); af.append(f"[0:a]atrim={a}:{b},asetpts=PTS-STARTPTS[a{i}]")
     n = len(tm.keep)
     grade = gr.get("ffmpeg", "eq=contrast=1.10:brightness=-0.015:saturation=1.10,unsharp=5:5:0.5")
-    fcv = ";".join(vf) + ";" + "".join(f"[v{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v];[v]scale={W}:{H}:flags=lanczos,fps={FPS}[vs];[vs]{grade}[vo]"
-    fca = ";".join(af) + ";" + "".join(f"[a{i}]" for i in range(n)) + f"concat=n={n}:v=0:a=1[a];[a]loudnorm=I=-14:TP=-1.5:LRA=11,aresample={SR}[ao]"
+    fcv = ";".join(vf) + ";" + "".join(f"[v{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v];[v]setpts=PTS/{speed},scale={W}:{H}:flags=lanczos,minterpolate=fps={FPS}:mi_mode=blend[vs];[vs]{grade}[vo]"
+    fca = ";".join(af) + ";" + "".join(f"[a{i}]" for i in range(n)) + f"concat=n={n}:v=0:a=1[a];[a]atempo={speed},loudnorm=I=-14:TP=-1.5:LRA=11,aresample={SR}[ao]"
     base = os.path.join(wd, "_base.mp4"); ungraded = os.path.join(wd, "_raw.mp4"); voice = os.path.join(wd, "_voice.wav")
     run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter_complex", fcv, "-map", "[vo]", "-an", "-c:v", "libx264", "-crf", "12", base])
     fcr = fcv.replace(f"[vs];[vs]{grade}[vo]", "[vo]")
@@ -296,6 +298,89 @@ def main(plan_path):
         r = int(wm[2]); yy, xx = np.mgrid[-r:r, -r:r]
         wm_mask = np.clip(1.3 - np.sqrt(xx ** 2 + yy ** 2) / r, 0, 1)[..., None].astype(np.float32)
 
+    # motion graphics (counter, grid, button) - built from the style DNA
+    red = hex_rgb(st["colors"]["chip_red"][0])
+    graphics = []
+    for g in plan.get("graphics", []):
+        g = dict(g); g["t0"] = T(g["t0"]); g["t1"] = T(g["t1"])
+        for key in ("strike_t", "click_t"):
+            if key in g: g[key] = T(g[key])
+        if g["type"] == "button":
+            col = st["colors"]["chip_blue"]; gl = rgba_css(st["colors"]["chip_blue_glow"])
+            g["img"] = pill(fonts, g["text"], col, gl, st)
+        if g["type"] == "grid":
+            n_, size = 3, g.get("size", 330); gap_ = size * 0.04; tile = (size - gap_ * 2) / 3
+            tiles = []
+            for r_ in range(3):
+                for c_ in range(3):
+                    tim = Image.new("RGBA", (int(tile), int(tile)), (0, 0, 0, 0))
+                    shade = 150 + 25 * ((r_ + c_) % 3)
+                    grad = np.linspace(shade + 30, shade - 30, int(tile))[:, None].repeat(int(tile), 1)
+                    body = Image.fromarray(np.clip(grad, 0, 255).astype(np.uint8), "L").convert("RGBA")
+                    m_ = Image.new("L", tim.size, 0); ImageDraw.Draw(m_).rounded_rectangle((0, 0, tim.width - 1, tim.height - 1), int(tile * 0.14), fill=235)
+                    body.putalpha(m_); tiles.append((r_, c_, body))
+            g.update(tiles=tiles, tile=tile, gap=gap_)
+        graphics.append(g)
+
+    def strike(img, x0, y0, x1, y1, q, width=12):
+        if q <= 0: return
+        xe, ye = x0 + (x1 - x0) * q, y0 + (y1 - y0) * q
+        d = ImageDraw.Draw(img)
+        d.line((x0, y0, xe, ye), fill=red + (240,), width=width)
+        d.ellipse((x0 - width / 2, y0 - width / 2, x0 + width / 2, y0 + width / 2), fill=red + (240,))
+        d.ellipse((xe - width / 2, ye - width / 2, xe + width / 2, ye + width / 2), fill=red + (240,))
+
+    def draw_graphic(img, g, t):
+        if not (g["t0"] <= t < g["t1"]): return
+        cy = g.get("y", 0.7) * H; age = t - g["t0"]
+        if g["type"] == "counter":
+            u = ease_out(age / g.get("count_s", 0.5))
+            val = g.get("from", 0) + (g["to"] - g.get("from", 0)) * u
+            txt = f"{int(val):,}"
+            col = hex_rgb(g.get("color", "#FFFFFF"))
+            num, nbo, nadv = word_img(fonts, txt, "sans", g.get("px", 110), color=col)
+            lab, lbo, ladv = word_img(fonts, g.get("suffix", ""), "serif", int(g.get("px", 110) * 0.8), color=col)
+            tot = nadv + 24 + ladv; x = W / 2 - tot / 2
+            ni, ndy = land(num, age * FPS / 6, rise=24, blur=14, s_from=1.12)
+            img.alpha_composite(ni, (int(x + nadv / 2 - ni.width / 2), int(cy - nbo + ndy)))
+            img.alpha_composite(lab, (int(x + nadv + 24 - (lab.width - ladv) / 2), int(cy - lbo)))
+            if "strike_t" in g:
+                q = ease_out((t - g["strike_t"]) * FPS / 7)
+                strike(img, x - 20, cy - g.get("px", 110) * 0.28, x + tot + 20, cy - g.get("px", 110) * 0.42, q)
+        elif g["type"] == "grid":
+            size = g.get("size", 330); x0 = W / 2 - size / 2; y0 = cy - size / 2
+            panel = Image.new("RGBA", (int(size + 60), int(size + 60)), (0, 0, 0, 0))
+            pm = Image.new("L", panel.size, 0); ImageDraw.Draw(pm).rounded_rectangle((0, 0, panel.width - 1, panel.height - 1), 34, fill=150)
+            panel.putalpha(pm); img.alpha_composite(panel, (int(x0 - 30), int(y0 - 30)))
+            for k_, (r_, c_, tim) in enumerate(g["tiles"]):
+                tt = age - k_ * g.get("stagger", 0.05)
+                if tt < 0: continue
+                ti = scale_fade(tim, tt * FPS / 6, 0.2, 1.08)
+                cx_ = x0 + c_ * (g["tile"] + g["gap"]) + g["tile"] / 2; cy_ = y0 + r_ * (g["tile"] + g["gap"]) + g["tile"] / 2
+                img.alpha_composite(ti, (int(cx_ - ti.width / 2), int(cy_ - ti.height / 2)))
+            if "strike_t" in g:
+                q1 = ease_out((t - g["strike_t"]) * FPS / 6); q2 = ease_out((t - g["strike_t"]) * FPS / 6 - 0.6)
+                strike(img, x0 - 10, y0 - 10, x0 + size + 10, y0 + size + 10, q1, 16)
+                strike(img, x0 + size + 10, y0 - 10, x0 - 10, y0 + size + 10, q2, 16)
+        elif g["type"] == "button":
+            b = g["img"]; ct = g.get("click_t", g["t0"] + 0.6)
+            sc = 1.0
+            if 0 <= t - ct < 0.25: sc = 0.93 + 0.07 * ((t - ct) / 0.25)
+            bi = scale_fade(b, age * FPS / 7)
+            if sc != 1.0: bi = bi.resize((int(bi.width * sc), int(bi.height * sc)), Image.BILINEAR)
+            img.alpha_composite(bi, (int(W / 2 - bi.width / 2), int(cy - bi.height / 2)))
+            # cursor glides in (eased) and clicks
+            u = ease_out(min(1, max(0, (t - g["t0"] - 0.1) / max(ct - g["t0"] - 0.1, 0.1))))
+            sx, sy = W * 0.88, H * 0.86; ex, ey = W / 2 + b.width * 0.18, cy + 10
+            px_, py_ = sx + (ex - sx) * u, sy + (ey - sy) * u
+            if t - ct >= 0:
+                rr = (t - ct) * 420; al = int(max(0, 160 * (1 - (t - ct) / 0.45)))
+                if al > 0: ImageDraw.Draw(img).ellipse((ex - rr, ey - rr, ex + rr, ey + rr), outline=(255, 255, 255, al), width=5)
+            arrow = [(0, 0), (0, 58), (15, 45), (26, 70), (37, 65), (26, 41), (46, 41)]
+            d = ImageDraw.Draw(img)
+            d.polygon([(px_ + x * 1.15 + 3, py_ + y * 1.15 + 4) for x, y in arrow], fill=(0, 0, 0, 110))
+            d.polygon([(px_ + x * 1.15, py_ + y * 1.15) for x, y in arrow], fill=(255, 255, 255, 255), outline=(10, 10, 10, 255))
+
     # 4) frames
     dec = subprocess.Popen(["ffmpeg", "-v", "error", "-i", base, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
     dec_raw = subprocess.Popen(["ffmpeg", "-v", "error", "-i", ungraded, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE) if wm else None
@@ -303,33 +388,95 @@ def main(plan_path):
     enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
                             "-c:v", "libx264", "-crf", "17", "-pix_fmt", "yuv420p", silent], stdin=subprocess.PIPE)
     tf = cam["transition"]["frames"]; flash = cam["after_cut_flash"]; push = cam.get("push_per_s", 0.012)
+    smooth = plan.get("camera_mode", cam.get("mode", "smooth")) == "smooth"
     rng = np.random.default_rng(1)
+
+    def smooth_scale(t):
+        """Slow eased zoom between keyframes [(t, scale)] - no jumps."""
+        if t <= scales[0][0]: return scales[0][1]
+        for (t0, s0), (t1, s1) in zip(scales, scales[1:]):
+            if t0 <= t < t1:
+                u = (t - t0) / max(t1 - t0, 1e-6); u = 0.5 - 0.5 * np.cos(np.pi * u)
+                return s0 + (s1 - s0) * u
+        return scales[-1][1]
+
+    # cutaways (slow-motion b-roll from the source or from a b-roll file), pre-rendered
+    cutaways = []
+    for k_, c in enumerate(plan.get("cutaways", [])):
+        t0o = T(c["t0"]); t1o = T(c["t1"]); dur_o = t1o - t0o
+        clip_src = os.path.join(wd, c["file"]) if c.get("file") else src
+        start = c.get("from", c["t0"]); slow = c.get("slowmo", 0.6)
+        span = dur_o * slow * speed + 0.2
+        x, y, w, h = c.get("crop", [0, 0, 0, 0])
+        crop = f"crop={w}:{h}:{x}:{y}," if w else ""
+        path = os.path.join(wd, f"_cut{k_}.mp4")
+        run(["ffmpeg", "-v", "error", "-y", "-ss", str(start), "-t", str(span), "-i", clip_src, "-an", "-vf",
+             f"{crop}scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setpts=PTS/{slow * speed},minterpolate=fps={FPS}:mi_mode=blend,{grade}",
+             "-c:v", "libx264", "-crf", "14", path])
+        cutaways.append(dict(t0=t0o, t1=t1o, path=path, dec=None, zoom=c.get("zoom", [1.0, 1.08])))
+
+    trans_pts = plan.get("transitions_extra", [])
+    trans_pts = [T(x) for x in trans_pts] + [c["t0"] for c in cutaways] + [c["t1"] for c in cutaways]
+    trans_pts += [c["t0"] for c in cards] + [c["t1"] for c in cards] + [a for a, b in bw] + [b for a, b in bw]
+    trans_pts = sorted(set(round(x, 3) for x in trans_pts))
+    rb_frames, rb_peak = cam.get("radial_frames", 6), cam.get("radial_strength", 0.14)
+
+    def radial_strength(t):
+        return max([rb_peak * max(0, 1 - abs(t - p) * FPS / rb_frames) for p in trans_pts] + [0])
+
+    def radial_blur(arr, s, cx=W / 2, cy=H * 0.45, n=9):
+        acc = np.zeros_like(arr, np.float32)
+        for j in range(n):
+            z = 1 + s * j / (n - 1)
+            M = np.float32([[z, 0, cx * (1 - z)], [0, z, cy * (1 - z)]])
+            acc += cv2.warpAffine(arr, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+        return acc / n
+
     for i in range(nfr):
         raw = dec.stdout.read(W * H * 3)
         if len(raw) < W * H * 3: break
         rawsrc = dec_raw.stdout.read(W * H * 3) if dec_raw else None
         t = i / FPS
         fr = np.frombuffer(raw, np.uint8).reshape(H, W, 3)
-        cur = [s for s in scales if s[0] <= t + 1e-6]; s_now = cur[-1][1] if cur else 1.0
-        since = t - (cur[-1][0] if cur else 0)
         in_bw = any(a <= t < b for a, b in bw)
-        bump = sum(0.045 * (min(1, (t - b) * FPS / 3) if t - b < 3 / FPS else np.exp(-((t - b) * FPS - 3) / 6)) for b in bumps if 0 <= t - b < 1.0)
-        s_eff = s_now * (1 + push * min(since, 3.0)) * (1 + bump) * (st["bw_punch"]["zoom"] if in_bw else 1.0)
-        sh = [(rng.normal(0, 9) * np.exp(-(t - b) * FPS / 5), rng.normal(0, 9) * np.exp(-(t - b) * FPS / 5)) for b in shakes if 0 <= t - b < 0.35]
-        dx, dy = (sum(s[0] for s in sh), sum(s[1] for s in sh)) if sh else (0, 0)
+        dx = dy = 0
+        if smooth:
+            s_eff = smooth_scale(t) * (st["bw_punch"]["zoom"] if in_bw else 1.0)
+            cur, since = [], 99
+        else:
+            cur = [s_ for s_ in scales if s_[0] <= t + 1e-6]; s_now = cur[-1][1] if cur else 1.0
+            since = t - (cur[-1][0] if cur else 0)
+            bump = sum(0.045 * (min(1, (t - b) * FPS / 3) if t - b < 3 / FPS else np.exp(-((t - b) * FPS - 3) / 6)) for b in bumps if 0 <= t - b < 1.0)
+            s_eff = s_now * (1 + push * min(since, 3.0)) * (1 + bump) * (st["bw_punch"]["zoom"] if in_bw else 1.0)
+            sh = [(rng.normal(0, 9) * np.exp(-(t - b) * FPS / 5), rng.normal(0, 9) * np.exp(-(t - b) * FPS / 5)) for b in shakes if 0 <= t - b < 0.35]
+            dx, dy = (sum(s_[0] for s_ in sh), sum(s_[1] for s_ in sh)) if sh else (0, 0)
 
         def zoom(img, s):
             M = np.float32([[s, 0, anchor[0] * (1 - s) + dx], [0, s, anchor[1] * (1 - s) + dy]])
             return cv2.warpAffine(img, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
 
-        k = int(round(since * FPS))
-        if len(cur) > 1 and k < tf:
-            strength = 1 - k / tf
-            out = np.mean([zoom(fr, s_eff * (1 + 0.07 * strength * j / 4)) for j in range(5)], axis=0, dtype=np.float32)
+        cw = next((c for c in cutaways if c["t0"] <= t < c["t1"]), None)
+        if cw:
+            if cw["dec"] is None:
+                cw["dec"] = subprocess.Popen(["ffmpeg", "-v", "error", "-i", cw["path"], "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
+            craw = cw["dec"].stdout.read(W * H * 3)
+            if len(craw) == W * H * 3:
+                cf = np.frombuffer(craw, np.uint8).reshape(H, W, 3)
+                u = (t - cw["t0"]) / (cw["t1"] - cw["t0"]); z0, z1 = cw["zoom"]
+                zz = z0 + (z1 - z0) * (0.5 - 0.5 * np.cos(np.pi * u))
+                M = np.float32([[zz, 0, W / 2 * (1 - zz)], [0, zz, H / 2 * (1 - zz)]])
+                out = cv2.warpAffine(cf, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT).astype(np.float32)
+            else:
+                out = zoom(fr, s_eff).astype(np.float32)
         else:
-            out = zoom(fr, s_eff).astype(np.float32)
-        if len(cur) > 1 and k < flash["decay_frames"]:
-            out *= 1 + flash["brightness"] * (1 - k / flash["decay_frames"])
+            k = int(round(since * FPS))
+            if not smooth and len(cur) > 1 and k < tf:
+                strength = 1 - k / tf
+                out = np.mean([zoom(fr, s_eff * (1 + 0.07 * strength * j / 4)) for j in range(5)], axis=0, dtype=np.float32)
+            else:
+                out = zoom(fr, s_eff).astype(np.float32)
+            if not smooth and len(cur) > 1 and k < flash["decay_frames"]:
+                out *= 1 + flash["brightness"] * (1 - k / flash["decay_frames"])
         if in_bw:
             g = out @ np.array([0.299, 0.587, 0.114], np.float32)
             out = np.repeat(g[..., None], 3, axis=2)
@@ -340,7 +487,7 @@ def main(plan_path):
         out *= vig
         gn = cv2.resize(grain[i % 4], (W, H), interpolation=cv2.INTER_LINEAR)[..., None] * 3.5
         out += gn
-        if wm and rawsrc is not None:
+        if wm and rawsrc is not None and not cw:
             src_fr = np.frombuffer(rawsrc, np.uint8).reshape(H, W, 3).astype(np.float32)
             x0, y0, r = int(wm[0]) - int(wm[2]), int(wm[1]) - int(wm[2]), int(wm[2])
             region = out[y0:y0 + 2 * r, x0:x0 + 2 * r]
@@ -407,7 +554,13 @@ def main(plan_path):
                 img.alpha_composite(big, (int(W / 2 - big.width / 2), int(H * 0.52 - cta["kbo"] + bdy)))
                 sm, sdy = land(cta["small"], p)
                 img.alpha_composite(sm, (int(W / 2 - sm.width / 2), int(H * 0.52 - st["cta"]["big_px"] * 0.95 - cta["sbo"] + sdy)))
-        enc.stdin.write(np.asarray(img.convert("RGB")).tobytes())
+        for gfx in graphics:
+            draw_graphic(img, gfx, t)
+        rs = radial_strength(t)
+        frame_out = np.asarray(img.convert("RGB"))
+        if rs > 0.005:
+            frame_out = np.clip(radial_blur(frame_out.astype(np.float32), rs), 0, 255).astype(np.uint8)
+        enc.stdin.write(frame_out.tobytes())
     enc.stdin.close(); enc.wait(); dec.wait()
     if dec_raw: dec_raw.wait()
 
@@ -415,13 +568,33 @@ def main(plan_path):
     with wave.open(voice) as w: v = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
     mix = v.copy(); levels = st["audio"]["sfx_levels_db"]
     bank = {k: f() for k, f in SFX.PALETTE.items()}
+    pack = plan.get("sfx_pack"); smap = plan.get("sfx_map", {})
+    if pack:
+        pack = os.path.join(wd, pack)
+        for role, (fname, max_s, lvl) in smap.items():
+            fp = os.path.join(pack, fname)
+            if not os.path.exists(fp): print("missing sfx:", fname); continue
+            raw_ = subprocess.check_output(["ffmpeg", "-v", "error", "-i", fp, "-vn", "-ac", "1", "-ar", str(SR), "-f", "s16le", "-"])
+            x = np.frombuffer(raw_, np.int16).astype(np.float32) / 32768
+            nz = np.where(np.abs(x) > 10 ** (-45 / 20))[0]
+            if len(nz): x = x[max(nz[0] - int(0.005 * SR), 0):]
+            if max_s < 0:  # take the tail (risers build up to their end)
+                x = x[-int(-max_s * SR):]; fl = min(int(0.05 * SR), len(x)); x[:fl] *= np.linspace(0, 1, fl)
+            else:
+                x = x[: int(max_s * SR)]; fl = min(int(0.04 * SR), len(x)); x[-fl:] *= np.linspace(1, 0, fl)
+            x = x / (np.max(np.abs(x)) + 1e-9)
+            bank[role] = x; levels[role] = lvl
     events = [(T(ts), nm) for ts, nm in plan.get("sfx", [])]
     if plan.get("auto_sfx", True):
         card_t = [c["t0"] for c in cards] + [c["t1"] for c in cards]
         events += [(t, "whoosh") for t, _ in scales[1:] if all(abs(t - ct) > 0.15 for ct in card_t)]
-        events += [(c["t0"] - 0.5 + 2 / FPS, "riser") for c in cards if not any(abs(c["t0"] - d["t1"]) < 0.05 for d in cards)]
-        events += [(T(ts), "deep_whoosh") for ts in []]
+        events += [(c["t0"] - plan.get("riser_s", 0.5) + 2 / FPS, "riser") for c in cards if not any(abs(c["t0"] - d["t1"]) < 0.05 for d in cards)]
+        if smooth:
+            events = [e for e in events if e[1] != "whoosh"] + [(p_ - 0.12, "whoosh") for p_ in trans_pts if all(abs(p_ - c["t0"]) > 0.05 for c in cards)]
+        if "highlight" in bank:
+            events += [(c["wt"][i_] + 4 / FPS, "highlight") for c in caps for i_ in c.get("power", [])]
     for ts, nm in events:
+        if nm not in bank: print("no sfx for", nm); continue
         s = bank[nm] * 10 ** ((levels.get(nm, -18) + 1) / 20)
         start = int(max(ts - 2 / FPS, 0) * SR); end = min(start + len(s), len(mix))
         if end > start: mix[start:end] += s[: end - start]

@@ -14,32 +14,24 @@
    1.0
   ],
   [
-   1.7,
-   1.07
+   2.64,
+   1.06
   ],
   [
    4.44,
    1.0
   ],
   [
-   5.4,
-   1.07
-  ],
-  [
    6.58,
-   1.0
-  ],
-  [
-   7.72,
    1.07
   ],
   [
    8.54,
-   1.0
+   1.02
   ],
   [
-   9.2,
-   1.07
+   10.03,
+   1.08
   ]
  ],
  "captions": [
@@ -214,8 +206,28 @@
    "deep_whoosh"
   ],
   [
+   3.5,
+   "count"
+  ],
+  [
+   3.98,
+   "click"
+  ],
+  [
    4.44,
    "glitch"
+  ],
+  [
+   5.4,
+   "pop"
+  ],
+  [
+   5.62,
+   "pop"
+  ],
+  [
+   6.02,
+   "wrong"
   ],
   [
    6.84,
@@ -227,11 +239,19 @@
   ],
   [
    8.54,
-   "low_hit"
+   "impact"
   ],
   [
-   8.54,
-   "deep_whoosh"
+   8.56,
+   "shine"
+  ],
+  [
+   9.2,
+   "pop"
+  ],
+  [
+   9.62,
+   "click"
   ]
  ],
  "words_file": "words.json",
@@ -254,5 +274,115 @@
   "camera": {
    "push_per_s": 0.008
   }
- }
+ },
+ "speed": 0.9,
+ "camera_mode": "smooth",
+ "riser_s": 0.6,
+ "sfx_pack": "sfx_pack",
+ "sfx_map": {
+  "deep_whoosh": [
+   "Deep woosh.MP3",
+   1.2,
+   -12
+  ],
+  "whoosh": [
+   "Whoosh 1.wav",
+   0.9,
+   -20
+  ],
+  "riser": [
+   "Riser Sfx.mp3",
+   -0.6,
+   -19
+  ],
+  "pop": [
+   "pop sound.MP3",
+   0.3,
+   -14
+  ],
+  "click": [
+   "click-for transitions.MP3",
+   0.35,
+   -14
+  ],
+  "glitch": [
+   "Glitch Flash 03.wav",
+   0.3,
+   -17
+  ],
+  "impact": [
+   "Impact.wav",
+   1.1,
+   -11
+  ],
+  "shine": [
+   "Shine.wav",
+   1.0,
+   -19
+  ],
+  "count": [
+   "Digital Counting Sound Effect.mp3",
+   0.6,
+   -17
+  ],
+  "wrong": [
+   "wrong answer-sound.MP3",
+   1.0,
+   -17
+  ],
+  "highlight": [
+   "Resaltador highlighter Sound Effect.mp3",
+   0.35,
+   -25
+  ]
+ },
+ "cutaways": [
+  {
+   "t0": 0.58,
+   "t1": 1.7,
+   "from": 0.58,
+   "crop": [
+    440,
+    0,
+    280,
+    498
+   ],
+   "slowmo": 0.5,
+   "zoom": [
+    1.0,
+    1.1
+   ]
+  }
+ ],
+ "graphics": [
+  {
+   "type": "counter",
+   "t0": 3.5,
+   "t1": 4.22,
+   "to": 1000000,
+   "suffix": "views",
+   "color": "#0A0A0A",
+   "y": 0.6,
+   "px": 96,
+   "count_s": 0.45,
+   "strike_t": 3.98
+  },
+  {
+   "type": "grid",
+   "t0": 5.4,
+   "t1": 6.58,
+   "y": 0.71,
+   "size": 320,
+   "stagger": 0.045,
+   "strike_t": 6.02
+  },
+  {
+   "type": "button",
+   "t0": 9.2,
+   "t1": 10.03,
+   "text": "Book a strategy session",
+   "y": 0.71,
+   "click_t": 9.62
+  }
+ ]
 }
