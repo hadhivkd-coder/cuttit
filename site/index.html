@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cuttit: Claude skills for reels, and edits on WhatsApp</title>
+<meta name="description" content="10 Claude skills that make reels for you. Soon: send a video on WhatsApp, get it back edited.">
+<style>
+  :root { --bg:#0b0b0f; --card:#15151c; --line:#26262f; --text:#f2f2f5; --muted:#a0a0ad; --accent:#c6ff3d; --wa:#25d366; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
+  a { color:inherit; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 20px; }
+  nav { display:flex; justify-content:space-between; align-items:center; padding:20px 0; }
+  .logo { font-weight:800; font-size:24px; letter-spacing:-0.5px; }
+  .logo span { color:var(--accent); }
+  .btn { display:inline-block; padding:12px 20px; border-radius:999px; font-weight:700; text-decoration:none; border:1px solid var(--line); }
+  .btn.primary { background:var(--accent); color:#111; border-color:var(--accent); }
+  .btn.wa { background:var(--wa); color:#062; border-color:var(--wa); color:#04210f; }
+  header { padding:64px 0 48px; }
+  .tag { display:inline-block; font-size:13px; color:var(--accent); border:1px solid #3a4a12; padding:4px 12px; border-radius:999px; margin-bottom:20px; }
+  h1 { font-size:clamp(38px, 7vw, 72px); line-height:1.02; letter-spacing:-2px; max-width:820px; }
+  h1 em { font-style:normal; color:var(--accent); }
+  .lead { color:var(--muted); font-size:19px; max-width:620px; margin:20px 0 28px; }
+  .ctas { display:flex; gap:12px; flex-wrap:wrap; }
+  section { padding:56px 0; border-top:1px solid var(--line); }
+  h2 { font-size:clamp(28px,4vw,40px); letter-spacing:-1px; margin-bottom:8px; }
+  .sub { color:var(--muted); margin-bottom:28px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; }
+  .card h3 { font-size:17px; margin:8px 0 6px; }
+  .card p { color:var(--muted); font-size:14px; }
+  .num { font-size:12px; color:var(--accent); font-weight:700; }
+  .steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:14px; }
+  .step b { display:block; font-size:34px; color:var(--accent); }
+  .price { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:14px; }
+  .price .card { padding:28px; }
+  .amount { font-size:44px; font-weight:800; letter-spacing:-1px; margin:8px 0; }
+  .amount small { font-size:16px; color:var(--muted); font-weight:500; }
+  ul.list { list-style:none; padding:0; margin:16px 0 22px; color:var(--muted); }
+  ul.list li { padding:5px 0; }
+  ul.list li::before { content:"✓  "; color:var(--accent); }
+  .featured { border-color:var(--accent) !important; }
+  footer { padding:32px 0 48px; color:var(--muted); font-size:14px; border-top:1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="logo">cutt<span>it</span></div>
+    <a class="btn" href="#pricing">Get the skills</a>
+  </nav>
+
+  <header>
+    <div class="tag">No editing software. Just Claude.</div>
+    <h1>Reels that <em>edit themselves.</em></h1>
+    <p class="lead">10 ready-made Claude skills that turn your clips, photos and ideas into reels: map flights, captions, ads, data races and more. Next up: send a video on WhatsApp and get it back edited.</p>
+    <div class="ctas">
+      <a class="btn primary" data-link="pack" href="#">Get all 10 skills</a>
+      <a class="btn wa" data-link="waitlist" href="#">Join the WhatsApp waitlist</a>
+    </div>
+  </header>
+
+  <section id="skills">
+    <h2>The 10 skills</h2>
+    <p class="sub">Drop a skill into Claude, ask for the reel, and get the finished video.</p>
+    <div class="grid" id="skill-grid"></div>
+  </section>
+
+  <section>
+    <h2>How it works</h2>
+    <p class="sub">Three steps. No timeline, no keyframes.</p>
+    <div class="steps">
+      <div class="card step"><b>1</b><h3>Add the skill</h3><p>Put the SKILL.md in Claude Code or upload it in the Claude app.</p></div>
+      <div class="card step"><b>2</b><h3>Ask for your reel</h3><p>"Make a map reel of my city." Claude asks a few questions, then builds it.</p></div>
+      <div class="card step"><b>3</b><h3>Post it</h3><p>Give notes one round at a time, export 1080×1920, upload.</p></div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <h2>Pricing</h2>
+    <p class="sub">Start free. Get the full pack when you're ready.</p>
+    <div class="price">
+      <div class="card">
+        <h3>Free skill</h3>
+        <div class="amount">₹0</div>
+        <ul class="list"><li>1 skill of your choice</li><li>Comment the reel's keyword on Instagram and we'll DM it to you</li></ul>
+        <a class="btn" data-link="instagram" href="#">Follow on Instagram</a>
+      </div>
+      <div class="card featured">
+        <h3>Full skill pack</h3>
+        <div class="amount">₹499 <small>one-time</small></div>
+        <ul class="list"><li>All 10 skills</li><li>Video walkthrough for each</li><li>Free updates and new skills</li><li>Early access to cuttit on WhatsApp</li></ul>
+        <a class="btn primary" data-link="pack" href="#">Buy the pack</a>
+      </div>
+      <div class="card">
+        <h3>cuttit on WhatsApp</h3>
+        <div class="amount">Soon</div>
+        <ul class="list"><li>Send a raw video on WhatsApp</li><li>Get it back edited: captions, music, voice</li><li>No apps, no software</li></ul>
+        <a class="btn wa" data-link="waitlist" href="#">Join the waitlist</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>© <span id="y"></span> cuttit · Not affiliated with Anthropic. Claude is a trademark of Anthropic.</footer>
+</div>
+
+<script>
+  // Fill these in before going live
+  const LINKS = {
+    pack: "https://example.com/REPLACE-with-your-Gumroad-or-Razorpay-link",
+    waitlist: "https://wa.me/91XXXXXXXXXX?text=Hi%20cuttit%2C%20add%20me%20to%20the%20waitlist",
+    instagram: "https://instagram.com/REPLACE_HANDLE"
+  };
+  const SKILLS = [
+    ["City map reel", "A 3D flight along a real route through your city, with a maps-style overlay."],
+    ["Word captions", "Captions that pop word by word, made locally with Whisper."],
+    ["Kinetic quote", "Words that slam and slide in on the beat."],
+    ["Bar chart race", "Animated rankings from real data, with the source on screen."],
+    ["Photos to ad", "5 phone photos turned into a 15 s product ad."],
+    ["Carousel maker", "7 to 10 designed slides, with copy written for you."],
+    ["Before / after", "A slider wipe or split screen with the two shots aligned."],
+    ["Itinerary reel", "\"3 days in your city\" with an animated map."],
+    ["Podcast clips", "The best moments picked out, with waveform and captions."],
+    ["Website + scroll", "A one-page website plus a phone scroll video of it."]
+  ];
+  document.getElementById("skill-grid").innerHTML = SKILLS.map((s, i) =>
+    `<div class="card"><div class="num">${String(i + 1).padStart(2, "0")}</div><h3>${s[0]}</h3><p>${s[1]}</p></div>`).join("");
+  document.querySelectorAll("[data-link]").forEach(a => { a.href = LINKS[a.dataset.link]; a.target = "_blank"; a.rel = "noopener"; });
+  document.getElementById("y").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
