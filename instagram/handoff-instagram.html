@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cuttit Instagram Handoff</title>
+<style>
+  /* Layout: one column of numbered task steps, then copy blocks for every CreatePie field. */
+  :root { --bg:#ffffff; --ink:#111114; --muted:#5f5f6a; --line:#e6e6ea; --soft:#f5f6f9; --accent:#2f5cff; --ok:#167a4a;
+          --sans: "Inter", system-ui, -apple-system, sans-serif; --mono: ui-monospace, Menlo, monospace; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0e0f12; --ink:#f0f0f3; --muted:#a0a0aa; --line:#24252b; --soft:#16171c; --accent:#7d90ff; --ok:#4cc68a; color-scheme: dark; } }
+  :root[data-theme="dark"] { --bg:#0e0f12; --ink:#f0f0f3; --muted:#a0a0aa; --line:#24252b; --soft:#16171c; --accent:#7d90ff; --ok:#4cc68a; color-scheme: dark; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.55; }
+  .col { max-width:720px; margin:0 auto; padding:28px 16px 80px; display:flex; flex-direction:column; gap:26px; }
+  .eyebrow { font-size:12px; font-weight:700; letter-spacing:1.3px; text-transform:uppercase; color:var(--accent); }
+  h1 { font-size:30px; letter-spacing:-0.8px; line-height:1.15; text-wrap:balance; }
+  h2 { font-size:19px; letter-spacing:-0.3px; }
+  p, li { color:var(--muted); }
+  ol.task { padding-left:20px; display:flex; flex-direction:column; gap:8px; }
+  ol.task li { color:var(--ink); }
+  ol.task li span { color:var(--muted); }
+  .box { border:1px solid var(--line); border-radius:12px; background:var(--soft); overflow:hidden; }
+  .bh { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 12px; border-bottom:1px solid var(--line); background:var(--bg); }
+  .bh b { font-size:13px; }
+  button { font:inherit; font-size:13px; font-weight:700; border:0; border-radius:8px; padding:7px 14px; background:var(--ink); color:var(--bg); cursor:pointer; }
+  button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  pre { white-space:pre-wrap; word-break:break-word; padding:12px; font-family:var(--sans); font-size:14px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  td { padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  td:first-child { font-weight:600; white-space:nowrap; }
+  a { color:var(--accent); }
+  .note { font-size:13px; }
+</style>
+</head>
+<body>
+<main class="col">
+  <header>
+    <div class="eyebrow">Handoff for Claude in Chrome · cuttit</div>
+    <h1>Set up the cuttit Instagram profile and post reel #1</h1>
+    <p>Written by Claude (cuttit build chat). Claude in Chrome: read this whole page, then do the task in the user's Instagram tab (instagram.com, already logged in).</p>
+  </header>
+  <section><h2>Task</h2><ol class="task">
+    <li><b>Edit profile</b> (Profile → Edit profile): name, bio, website and category from the boxes below. Keep the username the user created; if they want @cuttit-style names, ask them.</li>
+    <li><b>Profile picture:</b> ask the user to upload <b>profile-picture-1080.jpg</b> (or upload it yourself if attached).</li>
+    <li><b>Professional account:</b> check whether the account is a Professional (Creator) account. If not, tell the user to switch in the Instagram phone app (Settings → Account type and tools → Switch to professional → Creator → category "Digital creator"). It's needed for ads and comment-to-DM.</li>
+    <li><b>First reel:</b> create a new post with <b>reel-01-byline.mp4</b>, caption from "Reel 1 · caption" below. Share it to the feed. <span>Ask the user before you press Share.</span></li>
+    <li>When done, leave a comment on this page with the profile link, the reel link, and what you couldn't do.</li>
+  </ol></section>
+  <section><h2>Rules</h2><ol class="task">
+    <li>Never type passwords or verification codes. If Instagram asks for them, stop and let the user do it.</li>
+    <li>No following, liking, or DMing accounts in bulk. New accounts get restricted for bot-like behaviour.</li>
+    <li>Don't change the username, email, phone or privacy settings unless the user asks.</li>
+  </ol></section>
+  <section><h2>Fields</h2><div id="fields" style="display:flex;flex-direction:column;gap:12px;margin-top:12px"></div></section>
+  <section><h2>Files</h2><table>
+    <tr><td>profile-picture-1080.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/instagram/profile-picture-1080.jpg">GitHub → Download</a> · profile picture</td></tr>
+    <tr><td>reel-01-byline.mp4</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/instagram/reel-01-byline.mp4">GitHub → Download</a> · first reel (before/after ad)</td></tr>
+  </table></section>
+  <section><h2>After this (the user does it)</h2><p>Set up ManyChat (manychat.com, connect Instagram): an automation "comment contains BYLINE" → DM: "Here's Byline 👉 https://cuttit.createpie.store/products/byline-premium-reel-edits-with-claude--prod_1794139409361". Warm-up: 1–2 reels a day for 3–5 days before ads.</p></section>
+</main>
+<script>
+const FIELDS = [
+  ["Name", "cuttit · Claude editing skills"],
+  ["Bio (109 characters)", `Claude skills that edit your reels ✂️
+Before → After, one prompt. No timeline.
+Comment BYLINE for the skill 👇`],
+  ["Website", "https://cuttit.createpie.store/"],
+  ["Category", "Digital creator"],
+  ["Reel 1 · caption", `I didn't edit this. Claude did. ✂️
+
+Raw talking-head clip → premium edit: text behind me, orbit lines, 3D b-roll cards, motion graphics. One prompt, made with Claude Opus 5.5 and our Byline skill.
+
+Comment "BYLINE" and I'll send you the skill 👇
+
+#claudeai #aiediting #videoediting #reels #contentcreator #editingtips #aitools #motiongraphics`],
+  ["Reel 1 · cover text (if asked)", "Before → After: edited by Claude"]
+];
+const esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+document.getElementById("fields").innerHTML = FIELDS.map(([k, v], i) =>
+  `<div class="box"><div class="bh"><b>${esc(k)}</b><button type="button" data-i="${i}">Copy</button></div><pre>${esc(v)}</pre></div>`).join("");
+document.getElementById("fields").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  try { await navigator.clipboard.writeText(FIELDS[b.dataset.i][1]); b.textContent = "Copied"; }
+  catch (err) { const pre = b.closest(".box").querySelector("pre"); const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected"; }
+});
+</script>
+</body>
+</html>
