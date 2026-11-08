@@ -217,22 +217,18 @@
   },
   "lockup_fonts": {
     "round": {
-      "file": "GoogleSansFlex.ttf",
+      "file": "GoogleSans.ttf",
       "axes": [
-        144,
-        100,
-        800,
-        0,
+        18,
+        700,
         0
       ]
     },
     "small": {
-      "file": "GoogleSansFlex.ttf",
+      "file": "GoogleSans.ttf",
       "axes": [
-        36,
-        100,
-        600,
-        0,
+        18,
+        500,
         0
       ]
     },

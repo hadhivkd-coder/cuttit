@@ -167,6 +167,26 @@ def pill(fonts, text, colors, glow, st):
     return img
 
 
+def cubic_bezier(x1, y1, x2, y2):
+    """CSS/After Effects style timing curve: returns f(u) for u in 0..1."""
+    def f(u):
+        u = min(max(u, 0.0), 1.0)
+        if u in (0.0, 1.0): return u
+        t_ = u
+        for _ in range(8):  # Newton: solve x(t) = u
+            x = 3 * (1 - t_) ** 2 * t_ * x1 + 3 * (1 - t_) * t_ ** 2 * x2 + t_ ** 3 - u
+            dx = 3 * (1 - t_) ** 2 * x1 + 6 * (1 - t_) * t_ * (x2 - x1) + 3 * t_ ** 2 * (1 - x2)
+            if abs(dx) < 1e-6: break
+            t_ = min(max(t_ - x / dx, 0.0), 1.0)
+        return 3 * (1 - t_) ** 2 * t_ * y1 + 3 * (1 - t_) * t_ ** 2 * y2 + t_ ** 3
+    return f
+
+
+EASE_OUT_EXPO = cubic_bezier(0.16, 1, 0.3, 1)     # snappy start, long glide to rest
+EASE_OUT_QUINT = cubic_bezier(0.22, 1, 0.36, 1)   # smooth rise
+EASE_IN_OUT_SINE = cubic_bezier(0.37, 0, 0.63, 1)  # drift
+
+
 def ease_out_back(u, c1=1.45):
     u = min(max(u, 0), 1); c3 = c1 + 1
     return 1 + c3 * (u - 1) ** 3 + c1 * (u - 1) ** 2
@@ -1024,7 +1044,7 @@ def main(plan_path):
         """Lockup = small words aligned to the big word's edges + big word rising from a line. Smooth eases + soft blur."""
         age = t - L_["t0"]; dur = max(L_["t1"] - L_["t0"], 0.1); u = min(1, age / dur)
         lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        dx, dy = (np.array(L_.get("drift", [0, 0])) * (0.5 - 0.5 * np.cos(np.pi * u))).tolist()
+        dx, dy = (np.array(L_.get("drift", [0, 0])) * EASE_IN_OUT_SINE(u)).tolist()
         gz = 1 + L_.get("zoom", 0.05) * u
         b_ = L_.get("big")
         bx, by = (b_.get("x", 0.5) * W, b_.get("y", 0.6) * H) if b_ else (L_.get("x", 0.5) * W, L_.get("y", 0.6) * H)
@@ -1042,14 +1062,14 @@ def main(plan_path):
             lay.alpha_composite(im, (int(round(px_ - im.width / 2)), int(round(py_ - im.height / 2))))
         smalls = L_["small"]
         for k_, sm in enumerate(smalls):
-            a_ = (t - sm["t"]) / 0.38
+            a_ = (t - sm["t"]) / sm.get("in_s", 0.55)
             if a_ <= 0: continue
-            e = ease_out_expo(a_)
+            e = EASE_OUT_EXPO(a_)
             im, sbo = lk_text(sm["text"], sm.get("font", "small"), sm.get("px", 52), sm.get("fill", "plain"), tracking=-0.01)
             sb = im.getbbox() or (0, 0, im.width, im.height)
             if bim is not None and sm.get("align", "auto") != "free":
                 al = sm.get("align") if sm.get("align", "auto") != "auto" else (("left" if k_ == 0 else "right") if len(smalls) > 1 else "center")
-                gap = b_.get("px", 220) * 0.06
+                gap = b_.get("px", 220) * L_.get("gap", 0.0)
                 ay = btop - gap - (sb[3] - sb[1]) / 2 - (sb[1] + sb[3]) / 2 + im.height / 2
                 if al == "left": ax = bl - sb[0] + im.width / 2
                 elif al == "right": ax = br - sb[2] + im.width / 2
@@ -1058,9 +1078,9 @@ def main(plan_path):
                     ay = btop + (b_.get("px", 220) * 0.95) + gap
             else:
                 ax, ay = sm.get("x", 0.5) * W, sm.get("y", 0.5) * H
-            place(im, ax, ay + 26 * (1 - e), 1.0, min(1, e * 1.4), 6 * (1 - e))
+            place(im, ax, ay + 30 * (1 - e), 0.96 + 0.04 * e, min(1, e * 1.25), 8 * (1 - e))
         if b_ and t >= b_["t"]:
-            e = ease_out_expo((t - b_["t"]) / b_.get("reveal_s", 0.5))
+            e = EASE_OUT_QUINT((t - b_["t"]) / b_.get("reveal_s", 0.6))
             im = bim
             if e < 1:  # rises from behind a line at the baseline, with a soft blur that clears
                 shift = int(im.height * 0.5 * (1 - e)); clip = bbo + int(b_.get("px", 220) * 0.12)
