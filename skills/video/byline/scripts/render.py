@@ -403,6 +403,25 @@ def main(plan_path):
             if "strike_t" in g:
                 q = ease_out((t - g["strike_t"]) * FPS / 7)
                 strike(img, x - 20, cy - g.get("px", 110) * 0.28, x + tot + 20, cy - g.get("px", 110) * 0.42, q)
+        elif g["type"] == "grid" and g.get("style", "clean") == "clean":
+            # clean white 3x3 grid, whole graphic springs in from the centre; red diagonal line over the squares
+            size = g.get("size", 330); gap_ = size * 0.05; tile = (size - 2 * gap_) / 3
+            sc = spring(age * FPS / 8, (0.0, 0.7, 1.15, 0.95, 1.0))
+            if sc <= 0.01: return
+            layer = Image.new("RGBA", (int(size + 40), int(size + 40)), (0, 0, 0, 0)); d = ImageDraw.Draw(layer)
+            for r_ in range(3):
+                for c_ in range(3):
+                    x1 = 20 + c_ * (tile + gap_); y1 = 20 + r_ * (tile + gap_)
+                    d.rounded_rectangle((x1, y1 + 3, x1 + tile, y1 + tile + 3), int(tile * 0.12), fill=(0, 0, 0, 70))
+                    d.rounded_rectangle((x1, y1, x1 + tile, y1 + tile), int(tile * 0.12), fill=(255, 255, 255, 240))
+            if "strike_t" in g:
+                q = ease_out((t - g["strike_t"]) * FPS / 7)
+                if q > 0:
+                    ax, ay = 20 + tile * 0.25, 20 + tile * 0.25; bx_, by_ = 20 + size - tile * 0.25, 20 + size - tile * 0.25
+                    strike(layer, ax, ay, ax + (bx_ - ax), ay + (by_ - ay), q, g.get("line_px", 16))
+            if sc != 1.0:
+                layer = layer.resize((max(1, int(layer.width * sc)), max(1, int(layer.height * sc))), Image.BILINEAR)
+            img.alpha_composite(layer, (int(W / 2 - layer.width / 2), int(cy - layer.height / 2)))
         elif g["type"] == "grid":
             size = g.get("size", 330); x0 = W / 2 - size / 2; y0 = cy - size / 2
             panel = Image.new("RGBA", (int(size + 60), int(size + 60)), (0, 0, 0, 0))

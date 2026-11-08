@@ -72,20 +72,24 @@ the style's defaults.
 - Fonts: heavy sans (Poppins Bold) for standard text; high-contrast serif italic (Playfair Display Italic) **only** for the power word.
 - Crisp white text with a tight, high-opacity, low-distance black drop shadow. No heavy shadows, glows, outlines, underlines or ghost lines.
 - Centred horizontally at chest/neck level, never over the face.
-- 1, 2 or at most 3 words per chunk. Never a full sentence.
+- Rapid 1-2 word chunks. Never a full sentence.
 - Entry: the whole chunk pops from 80% to 100% in 4 frames with a slight spring overshoot.
 - Exit: hard cut on the exact frame the next chunk starts. No fades, slides or blur.
-- **Power word:** the single most important conceptual word **per sentence** switches to the serif italic, 20% larger than the sans,
-  and keeps scaling up very slowly (about +10%/s) while on screen.
+- **Power words:** the most important conceptual words of the script (e.g. "secret", "one", "SESSION") switch to the serif italic,
+  25% larger than the sans. Paired with standard text (e.g. "SESSION" over "with me"), the serif word is massive and dominant.
 
 **Full-screen breaker cards**
 - For high-impact single words: replace the video with solid black (white sans) or solid white (black serif italic),
   one word dead centre. Consecutive cards alternate black/white. Voice keeps playing.
-- The word scales up quickly and continuously while on screen (86% to 122%).
+- The word sits dead centre with a subtle, continuous slow zoom (100% to 108%).
 - Every card hits **exactly** on its first frame with a heavy, bass-driven whoosh.
 
+**Concept graphics**
+- Minimalist graphics explain concepts, e.g. "grid": a clean white 3x3 grid that springs in from the centre, then a red diagonal
+  line drawn over the squares. Built from white, black, blue and red only.
+
 **UI elements**
-- List chips: when the speaker lists items, no normal caption - a flat blue rounded pill with white text per item, stacked near
+- App/feature chips ("Reels") and lists: when the speaker names apps/features or lists items, no normal caption - a flat blue rounded pill with white text per item, stacked near
   the speaker, scaling 0% to 100% with a heavy spring overshoot, each synced to a sharp click/pop.
 - Quote/comparison boxes (e.g. "$20 vs $2,000"): clean rounded rectangles (`"shape": "box"`), red for the weak side and blue for the
   strong side, scaling up from the centre with an overshoot, synced to a paper swoosh or pop.

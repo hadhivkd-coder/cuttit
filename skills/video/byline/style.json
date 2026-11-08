@@ -47,15 +47,15 @@
   "captions": {
     "words_per_caption": [
       1,
-      3
+      2
     ],
     "y_rule": "chin_y + 0.17*H, clamped to 0.44H..0.62H",
     "sans_px": 76,
     "exit": "hard cut on the frame the next chunk starts",
     "emphasis_share": "1 power word per sentence, max 1 per 2 s",
     "mode": "pop",
-    "power_scale": 1.2,
-    "power_grow_per_s": 0.1,
+    "power_scale": 1.25,
+    "power_grow_per_s": 0.0,
     "pop_frames": 4,
     "shadow_tight": {
       "blur": 2,
@@ -91,8 +91,8 @@
     ],
     "sfx": "deep_whoosh",
     "scale_from_to": [
-      0.86,
-      1.22
+      1.0,
+      1.08
     ]
   },
   "chips": {

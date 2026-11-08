@@ -60,7 +60,9 @@
     "personal",
     "brands"
    ],
-   "power": []
+   "power": [
+    1
+   ]
   },
   {
    "t0": 1.7,
@@ -198,14 +200,6 @@
    "glitch"
   ],
   [
-   5.4,
-   "pop"
-  ],
-  [
-   5.62,
-   "pop"
-  ],
-  [
    6.02,
    "wrong"
   ],
@@ -220,6 +214,10 @@
   [
    9.2,
    "impact"
+  ],
+  [
+   5.4,
+   "pop"
   ]
  ],
  "words_file": "words.json",
@@ -344,11 +342,11 @@
  "graphics": [
   {
    "type": "grid",
+   "style": "clean",
    "t0": 5.4,
    "t1": 6.58,
    "y": 0.71,
    "size": 320,
-   "stagger": 0.045,
    "strike_t": 6.02
   }
  ],
