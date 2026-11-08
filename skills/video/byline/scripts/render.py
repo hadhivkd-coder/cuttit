@@ -711,6 +711,7 @@ def main(plan_path):
         d_ = np.exp(-(((xx_ - W / 2) / (W * 0.7)) ** 2 + ((yy_ - H * 0.7) / (H * 0.5)) ** 2))
         bgarr = (np.zeros(d_.shape + (3,), np.float32) + 10) + np.array([255, 170, 0], np.float32) * 0.22 * d_[..., None]
         bgi = Image.fromarray(bgarr.clip(0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR).convert("RGBA")
+        if fs.get("bg", plan.get("fullscreen_bg")) == "black": bgi = Image.new("RGBA", (W, H), (0, 0, 0, 255))
         if fs.get("type") == "black":
             return Image.new("RGBA", (W, H), (0, 0, 0, 255))
         if fs.get("type") == "clock":
@@ -1057,13 +1058,15 @@ def main(plan_path):
     GRAD = {"gold": ("h", [(0.0, (248, 244, 92)), (0.55, (247, 228, 70)), (1.0, (237, 178, 22))]),
             "silver": ("v", [(0.0, (246, 242, 236)), (0.82, (241, 233, 224)), (1.0, (244, 206, 172))]),
             "white": ("v", [(0.0, (255, 255, 255)), (0.85, (245, 238, 228)), (1.0, (244, 214, 186))]),
+            "neon": ("v", [(0.0, (255, 245, 70)), (1.0, (255, 226, 0))]),
             "plain": ("v", [(0.0, (255, 255, 255)), (1.0, (255, 255, 255))])}
 
-    def lk_text(text, kind, size, fill="plain", extrude=False, tracking=0.0):
-        """Text with a vertical gradient fill, soft drop shadow and optional dark extrusion. Returns (RGBA, baseline)."""
-        key = ("t", text, kind, size, fill, extrude, tracking)
+    def lk_text(text, kind, size, fill="plain", extrude=False, tracking=0.0, glow=0.0):
+        """Text with a gradient fill, soft drop shadow, optional dark extrusion and optional neon glow
+        (a blurred copy behind, `glow` = blur radius in px). Returns (RGBA, baseline)."""
+        key = ("t", text, kind, size, fill, extrude, tracking, glow)
         if key in lk_cache: return lk_cache[key]
-        f_ = lk_font(kind, size); pad = int(size * 0.5)
+        f_ = lk_font(kind, size); pad = int(size * 0.5 + glow * 2.2)
         wdt = int(sum(f_.getlength(c) + tracking * size for c in text)) + 2 * pad
         hgt = int(size * 1.6) + 2 * pad; base = pad + int(size * 1.15)
         m = Image.new("L", (wdt, hgt), 0); d = ImageDraw.Draw(m); x = pad
@@ -1080,6 +1083,11 @@ def main(plan_path):
         g_ = (np.repeat(col[None, :, :], hgt, 0) if dir_ == "h" else np.repeat(col[:, None, :], wdt, 1)).astype(np.uint8)
         txt = Image.fromarray(g_, "RGB").convert("RGBA"); txt.putalpha(m)
         out_ = Image.new("RGBA", (wdt, hgt), (0, 0, 0, 0))
+        if glow > 0:  # neon aura: wide soft halo + tighter core, in the text's own colour
+            gc = tuple(int(v) for v in sc_[len(sc_) // 2])
+            for rad_, k_ in ((glow, 1.0), (glow * 0.35, 0.8)):
+                ga = m.filter(ImageFilter.GaussianBlur(rad_)).point(lambda v, k_=k_: min(255, int(v * 1.9 * k_)))
+                out_.alpha_composite(Image.merge("RGBA", (*[Image.new("L", m.size, c) for c in gc], ga)))
         sh = m.filter(ImageFilter.GaussianBlur(size * 0.10)).point(lambda v: int(v * 0.55))
         out_.alpha_composite(Image.merge("RGBA", (*[Image.new("L", m.size, 0)] * 3, sh)), (0, int(size * 0.06)))
         if extrude:
@@ -1108,7 +1116,7 @@ def main(plan_path):
         bx, by = (b_.get("x", 0.5) * W, b_.get("y", 0.6) * H) if b_ else (L_.get("x", 0.5) * W, L_.get("y", 0.6) * H)
         bim = None
         if b_:
-            bim, bbo = lk_text(b_["text"], b_.get("font", "round"), b_.get("px", 220), b_.get("fill", "gold"), b_.get("extrude", False), b_.get("tracking", -0.02))
+            bim, bbo = lk_text(b_["text"], b_.get("font", "round"), b_.get("px", 220), b_.get("fill", "gold"), b_.get("extrude", False), b_.get("tracking", -0.02), b_.get("glow", 0.0))
             bb = bim.getbbox() or (0, 0, bim.width, bim.height)
             bl, br, btop = bx - bim.width / 2 + bb[0], bx - bim.width / 2 + bb[2], by - bim.height / 2 + bb[1]
         def place(im, ax, ay, sc=1.0, alpha=1.0, blur=0.0):
@@ -1136,16 +1144,24 @@ def main(plan_path):
                     ay = btop + (b_.get("px", 220) * 0.95) + gap
             else:
                 ax, ay = sm.get("x", 0.5) * W, sm.get("y", 0.5) * H
-            place(im, ax, ay + 30 * (1 - e), 0.96 + 0.04 * e, min(1, e * 1.25), 8 * (1 - e))
+            if L_.get("entry") == "pop":  # 0 -> 115% -> 100% spring, 4 frames
+                sp_ = spring((t - sm["t"]) * AF / L_.get("pop_frames", 4), (0.0, 1.15, 1.0))
+                if sp_ > 0.02: place(im, ax, ay, sp_, 1.0, 0.0)
+            else:
+                place(im, ax, ay + 30 * (1 - e), 0.96 + 0.04 * e, min(1, e * 1.25), 8 * (1 - e))
         if b_ and t >= b_["t"]:
             e = EASE_OUT_QUINT((t - b_["t"]) / b_.get("reveal_s", 0.6))
-            im = bim
+            im = bim; grow_ = 1 + b_.get("grow", 0.06) * min(1, (t - b_["t"]) / max(L_["t1"] - b_["t"], 0.1))
+            if L_.get("entry") == "pop":  # spring pop, then a slow continuous zoom until the lockup ends
+                sp_ = spring((t - b_["t"]) * AF / L_.get("pop_frames", 4), (0.0, 1.15, 1.0))
+                if sp_ > 0.02: place(im, bx, by, sp_ * grow_, 1.0, 0.0)
+                return lay
             if e < 1:  # rises from behind a line at the baseline, with a soft blur that clears
                 shift = int(im.height * 0.5 * (1 - e)); clip = bbo + int(b_.get("px", 220) * 0.12)
                 tmp = Image.new("RGBA", im.size, (0, 0, 0, 0)); tmp.alpha_composite(im.crop((0, 0, im.width, max(1, im.height - shift))), (0, shift))
                 mk = Image.new("L", im.size, 0); ImageDraw.Draw(mk).rectangle((0, 0, im.width, clip), fill=255)
                 tmp.putalpha(ImageChops.multiply(tmp.split()[3], mk)); im = tmp
-            place(im, bx, by, 1 + b_.get("grow", 0.06) * min(1, (t - b_["t"]) / dur), 1.0, 5 * (1 - e))
+            place(im, bx, by, grow_, 1.0, 5 * (1 - e))
         return lay
 
     def flamebar(img, g, t):

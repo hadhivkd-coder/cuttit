@@ -261,6 +261,18 @@
         0,
         0
       ]
+    },
+    "black": {
+      "file": "Montserrat.ttf",
+      "axes": [
+        900
+      ]
+    },
+    "mbold": {
+      "file": "Montserrat.ttf",
+      "axes": [
+        700
+      ]
     }
   }
 }
