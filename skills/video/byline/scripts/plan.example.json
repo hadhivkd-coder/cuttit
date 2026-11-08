@@ -177,11 +177,13 @@
    "items": [
     {
      "t": 6.84,
-     "text": "Reels"
+     "text": "Reels",
+     "icon": "play"
     },
     {
      "t": 7.26,
-     "text": "Pinned posts"
+     "text": "Pinned posts",
+     "icon": "pin"
     }
    ]
   }
@@ -218,6 +220,34 @@
   [
    5.4,
    "pop"
+  ],
+  [
+   0.62,
+   "pop"
+  ],
+  [
+   1.74,
+   "pop"
+  ],
+  [
+   2.32,
+   "click"
+  ],
+  [
+   4.5,
+   "pop"
+  ],
+  [
+   8.54,
+   "shine"
+  ],
+  [
+   9.24,
+   "pop"
+  ],
+  [
+   9.62,
+   "click"
   ]
  ],
  "words_file": "words.json",
@@ -341,6 +371,34 @@
  ],
  "graphics": [
   {
+   "type": "bars",
+   "t0": 0.62,
+   "t1": 1.7,
+   "y": 0.71,
+   "size": 260,
+   "heights": [
+    0.4,
+    0.66,
+    1.0
+   ]
+  },
+  {
+   "type": "lock",
+   "t0": 1.74,
+   "t1": 2.64,
+   "y": 0.71,
+   "size": 230,
+   "close_t": 2.32
+  },
+  {
+   "type": "heart",
+   "t0": 4.5,
+   "t1": 5.4,
+   "y": 0.71,
+   "size": 230,
+   "text": "0"
+  },
+  {
    "type": "grid",
    "style": "clean",
    "t0": 5.4,
@@ -348,6 +406,25 @@
    "y": 0.71,
    "size": 320,
    "strike_t": 6.02
+  },
+  {
+   "type": "ring",
+   "t0": 8.54,
+   "t1": 9.2,
+   "r": 140,
+   "burst": true
+  },
+  {
+   "type": "calendar",
+   "t0": 9.24,
+   "t1": 10.03,
+   "y": 0.735,
+   "size": 240,
+   "check_t": 9.62,
+   "mark": [
+    1,
+    2
+   ]
   }
  ],
  "cta": {

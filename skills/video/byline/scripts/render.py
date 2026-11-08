@@ -183,10 +183,39 @@ def tight_shadow(img, st):
     return Image.alpha_composite(out, img)
 
 
-def chip_flat(fonts, text, color, st, shape="pill"):
+def draw_icon(kind, size, color=(255, 255, 255)):
+    """Small line icons drawn at 4x and downsampled (smooth edges)."""
+    S = size * 4; im = Image.new("RGBA", (S, S), (0, 0, 0, 0)); d = ImageDraw.Draw(im); c = color + (255,)
+    if kind == "play":
+        d.rounded_rectangle((S * .04, S * .14, S * .96, S * .86), int(S * .2), outline=c, width=int(S * .09))
+        d.polygon([(S * .40, S * .33), (S * .40, S * .67), (S * .68, S * .5)], fill=c)
+    elif kind == "pin":
+        d.ellipse((S * .26, S * .04, S * .74, S * .52), fill=c)
+        d.polygon([(S * .38, S * .45), (S * .62, S * .45), (S * .5, S * .96)], fill=c)
+        d.ellipse((S * .40, S * .18, S * .60, S * .38), fill=(0, 0, 0, 0))
+    elif kind == "check":
+        d.line([(S * .12, S * .52), (S * .40, S * .80), (S * .88, S * .22)], fill=c, width=int(S * .14), joint="curve")
+    elif kind == "heart":
+        d.polygon(heart_pts(S * .5, S * .52, S * .42), fill=c)
+    return im.resize((size, size), Image.LANCZOS)
+
+
+def heart_pts(cx, cy, r, n=80):
+    t = np.linspace(0, 2 * np.pi, n)
+    x = 16 * np.sin(t) ** 3; y = 13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t)
+    return [(cx + r * xi / 17, cy - r * yi / 17) for xi, yi in zip(x, y)]
+
+
+def chip_flat(fonts, text, color, st, shape="pill", icon=None):
     c = st["chips"]
     t_img, base, adv = word_img(fonts, text, c.get("pop_font", "sans"), c.get("pop_px", 58))
     bb = t_img.getbbox(); t_img = t_img.crop(bb)
+    if icon:
+        ic = draw_icon(icon, int(t_img.height * 1.05))
+        gap = int(t_img.height * 0.45)
+        comb = Image.new("RGBA", (ic.width + gap + t_img.width, max(ic.height, t_img.height)), (0, 0, 0, 0))
+        comb.alpha_composite(ic, (0, (comb.height - ic.height) // 2)); comb.alpha_composite(t_img, (ic.width + gap, (comb.height - t_img.height) // 2))
+        t_img = comb
     ph, pw = c["padding_px"]
     w, h = t_img.width + 2 * pw, t_img.height + 2 * ph
     img = Image.new("RGBA", (w + 20, h + 20), (0, 0, 0, 0))
@@ -322,7 +351,7 @@ def main(plan_path):
             for q_ in c["pw"]: q_["x"] = x_; x_ += q_["adv"] + gap_
         for c in chips:
             for it in c["items"]:
-                it["img"] = chip_flat(fonts, it["text"], st["colors"]["chip_" + it.get("color", c.get("color", "blue"))][0], st, c.get("shape", "pill"))
+                it["img"] = chip_flat(fonts, it["text"], st["colors"]["chip_" + it.get("color", c.get("color", "blue"))][0], st, c.get("shape", "pill"), it.get("icon"))
         if cta and cta.get("cycle"):
             bimg, bbo, _ = word_img(fonts, cta["word"].upper(), "serif", st["cta"]["big_px"])
             cta["bigp"], cta["bbo"] = tight_shadow(bimg, st), bbo
@@ -359,7 +388,7 @@ def main(plan_path):
     graphics = []
     for g in plan.get("graphics", []):
         g = dict(g); g["t0"] = T(g["t0"]); g["t1"] = T(g["t1"])
-        for key in ("strike_t", "click_t"):
+        for key in ("strike_t", "click_t", "close_t", "check_t"):
             if key in g: g[key] = T(g[key])
         if g["type"] == "button":
             col = st["colors"]["chip_blue"]; gl = rgba_css(st["colors"]["chip_blue_glow"])
@@ -386,9 +415,113 @@ def main(plan_path):
         d.ellipse((x0 - width / 2, y0 - width / 2, x0 + width / 2, y0 + width / 2), fill=red + (240,))
         d.ellipse((xe - width / 2, ye - width / 2, xe + width / 2, ye + width / 2), fill=red + (240,))
 
+    WHITE = (255, 255, 255)
+
+    def drop_shadow(layer, blur=6, alpha=0.45, dy=6):
+        a = layer.split()[3].filter(ImageFilter.GaussianBlur(blur)).point(lambda v: int(v * alpha))
+        out = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+        out.alpha_composite(Image.merge("RGBA", (*[Image.new("L", layer.size, 0)] * 3, a)), (0, dy))
+        return Image.alpha_composite(out, layer)
+
+    def shape_layer(g, t, age):
+        """Draw a shape graphic at 2x on its own layer (S = size). Returns RGBA at 1x or None."""
+        S = g.get("size", 300); K = 2; L = S * K
+        im = Image.new("RGBA", (int(L * (2.0 if g["type"] == "heart" else 1.4)), int(L * 1.4)), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+        o = L * 0.2  # margin
+        typ = g["type"]
+        if typ == "bars":
+            hs = g.get("heights", [0.42, 0.68, 1.0]); n = len(hs); bw = L / (n * 1.45); gp = (L - n * bw) / max(n - 1, 1)
+            for k, hf in enumerate(hs):
+                gq = spring((age - k * 0.08) * FPS / 7, (0.0, 0.8, 1.08, 0.98, 1.0))
+                if gq <= 0: continue
+                hh = L * hf * gq; x1 = o + k * (bw + gp)
+                col = blue if k == g.get("highlight", n - 1) else WHITE
+                d.rounded_rectangle((x1, o + L - hh, x1 + bw, o + L), int(bw * 0.22), fill=col + (255,))
+        elif typ == "lock":
+            ct = g.get("close_t", g["t0"] + 0.4)
+            lift = L * 0.16 * (1 - spring((t - ct) * FPS / 5, (0.0, 0.8, 1.08, 1.0))) if t >= ct else L * 0.16
+            sw = int(L * 0.085)
+            d.arc((o + L * .28, o + L * .06 - lift, o + L * .72, o + L * .58 - lift), 180, 360, fill=WHITE + (255,), width=sw)
+            d.line((o + L * .28 + sw / 2, o + L * .32 - lift, o + L * .28 + sw / 2, o + L * .50), fill=WHITE + (255,), width=sw)
+            d.line((o + L * .72 - sw / 2, o + L * .32 - lift, o + L * .72 - sw / 2, o + L * .50 - (lift if t < ct else 0)), fill=WHITE + (255,), width=sw)
+            d.rounded_rectangle((o + L * .16, o + L * .44, o + L * .84, o + L * .98), int(L * .1), fill=WHITE + (255,))
+            d.ellipse((o + L * .44, o + L * .60, o + L * .56, o + L * .72), fill=(15, 15, 18, 255))
+            d.rounded_rectangle((o + L * .475, o + L * .68, o + L * .525, o + L * .84), int(L * .02), fill=(15, 15, 18, 255))
+        elif typ == "heart":
+            # heart outline on the left, number on the right; the pair is centred in the layer
+            num, nbo, nadv = word_img(fonts, g.get("text", "0"), "sans", int(S * 0.62 * K))
+            num = num.crop(num.getbbox())
+            hw = L * .62; gap = L * .14; tot = hw + gap + num.width
+            x0 = im.width / 2 - tot / 2; cy0 = im.height / 2
+            d.polygon(heart_pts(x0 + hw / 2, cy0, hw * .48), outline=WHITE + (255,), width=int(L * .05))
+            im.alpha_composite(num, (int(x0 + hw + gap), int(cy0 - num.height / 2)))
+        elif typ == "calendar":
+            d.rounded_rectangle((o, o, o + L, o + L * .9), int(L * .1), fill=WHITE + (245,))
+            d.rounded_rectangle((o, o, o + L, o + L * .22), int(L * .1), fill=blue + (255,))
+            d.rectangle((o, o + L * .12, o + L, o + L * .22), fill=blue + (255,))
+            for ring_x in (.3, .7):
+                d.rounded_rectangle((o + L * ring_x - L * .03, o - L * .06, o + L * ring_x + L * .03, o + L * .08), int(L * .03), fill=(200, 205, 215, 255))
+            mark = g.get("mark", (1, 2)); ckt = g.get("check_t", g["t0"] + 0.4)
+            for r_ in range(3):
+                for c_ in range(4):
+                    cx_ = o + L * (.17 + c_ * .22); cy_ = o + L * (.38 + r_ * .17); rr = L * .045
+                    if (r_, c_) == tuple(mark) and t >= ckt:
+                        q = spring((t - ckt) * FPS / 6, (0.0, 0.8, 1.15, 1.0)); R = L * .085 * q
+                        d.ellipse((cx_ - R, cy_ - R, cx_ + R, cy_ + R), fill=blue + (255,))
+                        if q > 0.6:
+                            ic = draw_icon("check", int(L * .11)); im.alpha_composite(ic, (int(cx_ - ic.width / 2), int(cy_ - ic.height / 2)))
+                    else:
+                        d.ellipse((cx_ - rr, cy_ - rr, cx_ + rr, cy_ + rr), fill=(190, 195, 205, 255))
+        elif typ == "arrow":
+            q = ease_out(age * FPS / g.get("draw_frames", 10))
+            pts = [(o + L * (0.05 + 0.9 * u), o + L * (0.8 - 0.75 * np.sin(np.pi * u * 0.6) * u)) for u in np.linspace(0, q, 30)]
+            if len(pts) > 1:
+                d.line(pts, fill=WHITE + (255,), width=int(L * .045), joint="curve")
+                (x2, y2), (x1, y1) = pts[-1], pts[-2]; ang = np.arctan2(y2 - y1, x2 - x1); ah = L * .12
+                d.polygon([(x2 + np.cos(ang) * ah * .3, y2 + np.sin(ang) * ah * .3),
+                           (x2 + np.cos(ang + 2.5) * ah, y2 + np.sin(ang + 2.5) * ah),
+                           (x2 + np.cos(ang - 2.5) * ah, y2 + np.sin(ang - 2.5) * ah)], fill=WHITE + (255,))
+        else:
+            return None
+        im = im.resize((im.width // K, im.height // K), Image.LANCZOS)
+        return drop_shadow(im)
+
+    def draw_overlay_fx(img, g, t, age):
+        """Ring that draws around a point (e.g. a power word) + burst lines. Drawn in place at 2x."""
+        cx = W / 2; cyy = g.get("y", None)
+        cyy = cyy * H if cyy is not None else cap_base - cs["sans_px"] * 0.38
+        R = g.get("r", 120); K = 2
+        lay = Image.new("RGBA", (int(R * 4 * K), int(R * 4 * K)), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+        C = lay.width / 2
+        if g["type"] == "ring":
+            q = ease_out(age * FPS / g.get("draw_frames", 9))
+            if q > 0:
+                d.arc((C - R * K, C - R * K * 0.78, C + R * K, C + R * K * 0.78), -100, -100 + 360 * q,
+                      fill=hex_rgb(g.get("color", "#2F7BFF")) + (255,), width=int(11 * K))
+        if g["type"] in ("ring", "burst") and g.get("burst", g["type"] == "burst"):
+            bq = age * FPS / 9
+            if 0 <= bq <= 1:
+                for k in range(8):
+                    a = 2 * np.pi * k / 8 + 0.3
+                    r1 = R * K * (1.05 + 0.35 * ease_out(bq)); r2 = r1 + R * K * 0.28 * (1 - bq)
+                    d.line((C + np.cos(a) * r1, C + np.sin(a) * r1 * 0.8, C + np.cos(a) * r2, C + np.sin(a) * r2 * 0.8),
+                           fill=(255, 255, 255, int(255 * (1 - bq))), width=int(6 * K))
+        lay = lay.resize((lay.width // K, lay.height // K), Image.LANCZOS)
+        img.alpha_composite(lay, (int(cx - lay.width / 2), int(cyy - lay.height / 2)))
+
     def draw_graphic(img, g, t):
         if not (g["t0"] <= t < g["t1"]): return
         cy = g.get("y", 0.7) * H; age = t - g["t0"]
+        if g["type"] in ("ring", "burst"):
+            draw_overlay_fx(img, g, t, age); return
+        if g["type"] in ("bars", "lock", "heart", "calendar", "arrow"):
+            lay = shape_layer(g, t, age)
+            if lay is None: return
+            sc = spring(age * FPS / 8, (0.0, 0.7, 1.15, 0.95, 1.0)) if g["type"] != "arrow" else 1.0
+            if sc <= 0.01: return
+            if sc != 1.0: lay = lay.resize((max(1, int(lay.width * sc)), max(1, int(lay.height * sc))), Image.BILINEAR)
+            img.alpha_composite(lay, (int(g.get("x", 0.5) * W - lay.width / 2), int(cy - lay.height / 2)))
+            return
         if g["type"] == "counter":
             u = ease_out(age / g.get("count_s", 0.5))
             val = g.get("from", 0) + (g["to"] - g.get("from", 0)) * u

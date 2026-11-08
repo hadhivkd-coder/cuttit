@@ -85,8 +85,10 @@ the style's defaults.
 - Every card hits **exactly** on its first frame with a heavy, bass-driven whoosh.
 
 **Concept graphics**
-- Minimalist graphics explain concepts, e.g. "grid": a clean white 3x3 grid that springs in from the centre, then a red diagonal
-  line drawn over the squares. Built from white, black, blue and red only.
+- Minimalist graphics explain concepts: one graphic per idea, below the caption (about 71% height), never over the face.
+  Pick from the library in section 5 (bars, lock, heart, ring, calendar, arrow, grid, icon chips) by meaning, e.g. "grid":
+  a clean white 3x3 grid, then a red diagonal line over the squares. White, black, blue and red only.
+- Each graphic gets a sound: appear = pop, lock/check/click moments = click, ring = shine, wrong/strike = wrong.
 
 **UI elements**
 - App/feature chips ("Reels") and lists: when the speaker names apps/features or lists items, no normal caption - a flat blue rounded pill with white text per item, stacked near
@@ -146,7 +148,15 @@ If the user wants something the scripts don't do (b-roll, music, new elements fr
   `"punch"` brings back fast punch-ins with bumps and shake for high-energy edits.
 - Radial-blur transitions are added automatically at every card, B&W and cutaway boundary (`camera.radial_strength`).
 - `cutaways`: slow-motion b-roll, from the user's b-roll file (`file`) or a crop of the source (`crop`), with `slowmo` and a slow zoom.
-- `graphics` (motion graphics in the style DNA):
+- `graphics` (motion graphics in the style DNA; every shape springs in from the centre with a bounce, drawn at 2x for smooth edges):
+  - `bars`: bar chart growing bar by bar, `highlight` bar in blue ("top tier", "growth", "results").
+  - `lock`: padlock that clicks shut at `close_t` ("secret", "private", "exclusive").
+  - `heart`: outline heart with a number, e.g. "0" ("nobody cares", "likes", "engagement").
+  - `ring` (+ `burst: true`): blue ring that draws around the caption word, with burst lines ("one", "only", key numbers).
+  - `calendar`: calendar card whose date gets a blue check at `check_t` ("book", "session", "schedule", "deadline").
+  - `arrow`: curved arrow that draws itself ("this", "look", pointing at a chip or b-roll detail).
+  - chip `icon`: "play", "pin", "check" or "heart" inside a chip (e.g. Reels = play, Pinned posts = pin).
+  - `grid` (`style: clean`): white 3x3 grid with a red diagonal line at `strike_t`.
   - `counter`: a number counting up with a serif label, optional red strike-through (`strike_t`).
   - `grid`: tiles popping in one by one, optional red X (`strike_t`).
   - `button`: a blue pill button with a cursor that glides in and clicks (`click_t`).
