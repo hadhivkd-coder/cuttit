@@ -273,6 +273,7 @@ def main(plan_path):
     fonts = Fonts(st, os.path.join(wd, plan.get("font_dir", "fonts")))
     dur = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", src]))
     speed = plan.get("speed", 1.0)
+    interp_mode = plan.get("interp", "mci")
     tm = TimeMap(plan.get("cuts", []), dur, speed); T = tm
     cs, cam, gr = st["captions"], st["camera"], st.get("grade", {})
 
@@ -282,7 +283,7 @@ def main(plan_path):
         vf.append(f"[0:v]trim={a}:{b},setpts=PTS-STARTPTS[v{i}]"); af.append(f"[0:a]atrim={a}:{b},asetpts=PTS-STARTPTS[a{i}]")
     n = len(tm.keep)
     grade = gr.get("ffmpeg", "eq=contrast=1.10:brightness=-0.015:saturation=1.10,unsharp=5:5:0.5")
-    fcv = ";".join(vf) + ";" + "".join(f"[v{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v];[v]setpts=PTS/{speed},minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,scale={W}:{H}:flags=lanczos[vs];[vs]{grade}[vo]"
+    fcv = ";".join(vf) + ";" + "".join(f"[v{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v];[v]setpts=PTS/{speed}," + (f"minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1" if interp_mode == "mci" else f"fps={FPS}") + f",scale={W}:{H}:flags=lanczos[vs];[vs]{grade}[vo]"
     fca = ";".join(af) + ";" + "".join(f"[a{i}]" for i in range(n)) + f"concat=n={n}:v=0:a=1[a];[a]atempo={speed},loudnorm=I=-14:TP=-1.5:LRA=11,aresample={SR}[ao]"
     base = os.path.join(wd, "_base.mp4"); ungraded = os.path.join(wd, "_raw.mp4"); voice = os.path.join(wd, "_voice.wav")
     run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter_complex", fcv, "-map", "[vo]", "-an", "-c:v", "libx264", "-crf", "12", base])
@@ -649,6 +650,139 @@ def main(plan_path):
             d.polygon([(px_ + x * 1.15 + 3, py_ + y * 1.15 + 4) for x, y in arrow], fill=(0, 0, 0, 110))
             d.polygon([(px_ + x * 1.15, py_ + y * 1.15) for x, y in arrow], fill=(255, 255, 255, 255), outline=(10, 10, 10, 255))
 
+    # ---------- v9: person matte, text behind the speaker, animated lines, kinetic letters ----------
+    matte_sess = None
+    if plan.get("matte_model") and (plan.get("behind") or plan.get("lines")):
+        import onnxruntime as ort
+        matte_sess = ort.InferenceSession(os.path.join(wd, plan["matte_model"]), providers=["CPUExecutionProvider"])
+    matte_prev = [None]
+
+    def person_matte(frame_u8):
+        x = cv2.resize(frame_u8, (288, 512), interpolation=cv2.INTER_AREA).astype(np.float32)
+        x = ((x / 255 - 0.5) / 0.5).transpose(2, 0, 1)[None]
+        m = matte_sess.run(None, {"input": x})[0][0, 0]
+        if matte_prev[0] is not None: m = 0.55 * m + 0.45 * matte_prev[0]  # temporal smoothing (no flicker)
+        matte_prev[0] = m
+        return cv2.resize(m, (W, H), interpolation=cv2.INTER_LINEAR)
+
+    char_cache = {}
+
+    def char_img(ch, kind, px, color):
+        k = (ch, kind, px, color)
+        if k not in char_cache:
+            im_, bo_, adv_ = word_img(fonts, ch, kind, px, color=color)
+            char_cache[k] = (im_, bo_, adv_)
+        return char_cache[k]
+
+    def kinetic_text(text, kind, px, color, age, stagger=0.035, dur_in=0.32, track=0.0, rise=None):
+        """Letters rise in one by one (eased, with blur), tracking widens by `track` em. Returns (RGBA, baseline_y)."""
+        rise = px * 0.45 if rise is None else rise
+        chars = [char_img(c, kind, px, color) for c in text]
+        tr = fonts.tracking(kind) * px + track * px
+        tot = sum(c[2] for c in chars) + tr * (len(chars) - 1)
+        pad = int(px * 0.9)
+        lay = Image.new("RGBA", (int(tot + 2 * pad), int(px * 2.6)), (0, 0, 0, 0)); base = int(px * 1.75)
+        x = pad
+        for k, (im_, bo_, adv_) in enumerate(chars):
+            u = (age - k * stagger) / dur_in
+            if u > 0:
+                e = ease_out_expo(u)
+                li = im_
+                bl = 10 * (1 - e)
+                if bl > 0.5: li = li.filter(ImageFilter.GaussianBlur(bl))
+                if e < 1: li = li.copy(); li.putalpha(li.split()[3].point(lambda v: int(v * min(1, e * 1.4))))
+                lay.alpha_composite(li, (int(x - (im_.width - adv_) / 2), int(base - bo_ + rise * (1 - e))))
+            x += adv_ + tr
+        return lay, base
+
+    behind = []
+    for b_ in plan.get("behind", []):
+        b_ = dict(b_); b_["t0"] = T(b_["t0"]); b_["t1"] = T(b_["t1"]); behind.append(b_)
+    lines = []
+    for l_ in plan.get("lines", []):
+        l_ = dict(l_); l_["t0"] = T(l_["t0"]); l_["t1"] = T(l_["t1"]); lines.append(l_)
+    face_c = (fx + fw / 2, fy + fh * 0.45)
+
+    def map_pt(x, y, s):
+        return anchor[0] + s * (x - anchor[0]), anchor[1] + s * (y - anchor[1])
+
+    def draw_behind_layer(t, s):
+        """Giant text placed behind the speaker (composited under the person matte)."""
+        lay = None
+        for b_ in behind:
+            if not (b_["t0"] <= t < b_["t1"]): continue
+            age = t - b_["t0"]; dur = b_["t1"] - b_["t0"]
+            lay = lay or Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            out_k = 1 - ease_in_cubic((age - (dur - 0.25)) / 0.25)
+            grow = (1 + b_.get("grow", 0.06) * (age / max(dur, 0.1))) * s
+            col = hex_rgb(b_.get("color", "#FFFFFF"))
+            y = b_.get("y", 0.25) * H
+            for j, txt in enumerate(b_["lines"]):
+                kl, kb = kinetic_text(txt, b_.get("font", "sans"), b_.get("px", 240), col, age - j * 0.12,
+                                      stagger=b_.get("stagger", 0.045), dur_in=0.42, track=0.02 * age)
+                kl = kl.resize((max(1, int(kl.width * grow)), max(1, int(kl.height * grow))), Image.BILINEAR)
+                op = b_.get("opacity", 0.95) * out_k
+                if op < 1: kl.putalpha(kl.split()[3].point(lambda v: int(v * op)))
+                ly = y + j * b_.get("px", 240) * b_.get("leading", 0.9) * grow
+                lay.alpha_composite(kl, (int(b_.get("x", 0.5) * W - kl.width / 2), int(ly - kb * grow)))
+        return lay
+
+    def stroke_path(pts, width, color, glow=True):
+        """Smooth glowing stroke along a list of points, returned as an RGBA layer (2x supersampled)."""
+        if len(pts) < 2: return None
+        xs = [p_[0] for p_ in pts]; ys = [p_[1] for p_ in pts]
+        x0_, y0_ = int(min(xs) - 60), int(min(ys) - 60); x1_, y1_ = int(max(xs) + 60), int(max(ys) + 60)
+        K = 2; lw, lh = (x1_ - x0_) * K, (y1_ - y0_) * K
+        if lw <= 0 or lh <= 0: return None
+        lay = Image.new("RGBA", (lw, lh), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+        P = [((x - x0_) * K, (y - y0_) * K) for x, y in pts]
+        d.line(P, fill=color + (255,), width=int(width * K), joint="curve")
+        r = width * K / 2
+        for cx_, cy_ in (P[0], P[-1]): d.ellipse((cx_ - r, cy_ - r, cx_ + r, cy_ + r), fill=color + (255,))
+        lay = lay.resize((lw // K, lh // K), Image.LANCZOS)
+        if glow:
+            g_ = lay.split()[3].filter(ImageFilter.GaussianBlur(9)).point(lambda v: int(v * 0.8))
+            gl = Image.merge("RGBA", (*[Image.new("L", lay.size, c) for c in color], g_))
+            lay = Image.alpha_composite(gl, lay)
+        return lay, (x0_, y0_)
+
+    def trim(age, dur, draw_s=0.55, lag=0.32):
+        """Trim-path animation: head draws on, tail chases it off near the end."""
+        head = ease_out_expo(age / draw_s)
+        tail = ease_in_cubic((age - max(dur - draw_s, lag)) / draw_s) if dur > 0 else 0
+        return max(0.0, min(tail, 1.0)), head
+
+    def line_layers(t, s):
+        back, front = [], []
+        for l_ in lines:
+            if not (l_["t0"] <= t < l_["t1"]): continue
+            age = t - l_["t0"]; dur = l_["t1"] - l_["t0"]
+            a0, a1 = trim(age, dur, l_.get("draw_s", 0.55))
+            if a1 - a0 < 0.005: continue
+            col = hex_rgb(l_.get("color", "#FFFFFF")); wdt = l_.get("width", 7)
+            if l_["type"] == "orbit":
+                cxo, cyo = map_pt(*face_c, s)
+                cyo += l_.get("dy", 0.0) * H
+                rx, ry = l_.get("rx", 0.40) * W * s, l_.get("ry", 0.055) * H * s
+                tilt = np.radians(l_.get("tilt", -10)); spin = l_.get("start", 0.6)
+                th = spin + 2 * np.pi * l_.get("turns", 1.0) * np.linspace(a0, a1, 160)
+                ex, ey = rx * np.cos(th), ry * np.sin(th)
+                X = cxo + ex * np.cos(tilt) - ey * np.sin(tilt); Y = cyo + ex * np.sin(tilt) + ey * np.cos(tilt)
+                isback = np.sin(th) < 0  # upper half of the ellipse passes behind the head
+                seg, cur = [], None
+                for k in range(len(th)):
+                    if cur is None or isback[k] != cur:
+                        if seg: (back if cur else front).append(stroke_path(seg, wdt, col)); seg = seg[-1:]
+                        cur = isback[k]
+                    seg.append((X[k], Y[k]))
+                if seg: (back if cur else front).append(stroke_path(seg, wdt, col))
+            elif l_["type"] == "swoosh":
+                C = np.array(l_["pts"], np.float32) * np.array([W, H], np.float32)
+                u = np.linspace(a0, a1, 120)[:, None]
+                B = ((1 - u) ** 3) * C[0] + 3 * ((1 - u) ** 2) * u * C[1] + 3 * (1 - u) * u ** 2 * C[2] + u ** 3 * C[3]
+                front.append(stroke_path([tuple(p_) for p_ in B], wdt, col))
+        return [x for x in back if x], [x for x in front if x]
+
     # 4) frames
     dec = subprocess.Popen(["ffmpeg", "-v", "error", "-i", base, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
     dec_raw = subprocess.Popen(["ffmpeg", "-v", "error", "-i", ungraded, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE) if wm else None
@@ -679,11 +813,11 @@ def main(plan_path):
         crop = f"crop={w}:{h}:{x}:{y}," if w else ""
         path = os.path.join(wd, f"_cut{k_}.mp4")
         run(["ffmpeg", "-v", "error", "-y", "-ss", str(start), "-t", str(span), "-i", clip_src, "-an", "-vf",
-             f"{crop}scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},scale=608:1080,setpts=PTS/{slow * speed},minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,scale={W}:{H}:flags=lanczos,{grade}",
+             f"{crop}scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},scale=608:1080,setpts=PTS/{slow * speed}," + (f"minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1" if interp_mode == "mci" else f"fps={FPS}") + f",scale={W}:{H}:flags=lanczos,{grade}",
              "-c:v", "libx264", "-crf", "14", path])
         cutaways.append(dict(t0=t0o, t1=t1o, path=path, dec=None, zoom=c.get("zoom", [1.0, 1.08]),
                              mode=c.get("mode", "full"), enter=c.get("enter", "right"), card_w=c.get("card_w", 0.66),
-                             card_y=c.get("card_y", 0.44)))
+                             card_y=c.get("card_y", 0.44), reveal=c.get("reveal")))
 
     trans_pts = plan.get("transitions_extra", [])
     trans_pts = [T(x) for x in trans_pts] + [c["t0"] for c in cutaways] + [c["t1"] for c in cutaways]
@@ -800,6 +934,17 @@ def main(plan_path):
                 out = cv2.warpAffine(cf, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT).astype(np.float32)
                 if cw["mode"] == "card":
                     out = card_composite(zoom(fr, s_eff).astype(np.float32), out, cw, t)
+                elif cw.get("reveal") == "iris":
+                    ia = t - cw["t0"]
+                    if ia < 0.5:
+                        e = ease_out_expo(ia / 0.5); R = e * np.hypot(W, H) * 0.55
+                        if not hasattr(card_composite, "grid"):
+                            yy2, xx2 = np.mgrid[0:H, 0:W].astype(np.float32); card_composite.grid = np.hypot(xx2 - W / 2, yy2 - H * 0.42)
+                        dist = card_composite.grid
+                        mk = np.clip((R - dist) / 6, 0, 1)[..., None]
+                        ring = np.clip(1 - np.abs(dist - R) / 5, 0, 1)[..., None] * (1 - e)
+                        out = out * mk + zoom(fr, s_eff).astype(np.float32) * (1 - mk)
+                        out = out + ring * (255 - out)
             else:
                 out = zoom(fr, s_eff).astype(np.float32)
         else:
@@ -815,6 +960,23 @@ def main(plan_path):
             g = out @ np.array([0.299, 0.587, 0.114], np.float32)
             out = np.repeat(g[..., None], 3, axis=2)
             out = (out - 128) * 1.15 + 128
+        front_lines = []
+        back_l = []
+        if lines:
+            back_l, front_lines = line_layers(t, s_eff)
+            if cw: front_lines, back_l = back_l + front_lines, []
+        if matte_sess is not None and not cw:
+            bl_ = draw_behind_layer(t, s_eff)
+            if bl_ is not None or back_l:
+                m_ = person_matte(fr)
+                m_ = cv2.warpAffine(m_, np.float32([[s_eff, 0, anchor[0] * (1 - s_eff)], [0, s_eff, anchor[1] * (1 - s_eff)]]), (W, H))[..., None]
+                bgp = Image.fromarray(np.clip(out, 0, 255).astype(np.uint8)).convert("RGBA")
+                if bl_ is not None: bgp.alpha_composite(bl_)
+                for lay_, (lx, ly) in back_l: bgp.alpha_composite(lay_, (int(lx), int(ly)))
+                bga = np.asarray(bgp.convert("RGB"), np.float32)
+                out = out * m_ + bga * (1 - m_)
+            else:
+                matte_prev[0] = None
         if vig is None:
             yy, xx = np.mgrid[0:H, 0:W]
             vig = (1 - 0.28 * (((xx - W / 2) / (W / 2)) ** 2 * 0.6 + ((yy - H / 2) / (H / 2)) ** 2 * 0.8)).clip(0.6, 1)[..., None].astype(np.float32)
@@ -835,9 +997,12 @@ def main(plan_path):
                 img = Image.new("RGBA", (W, H), card["bgc"] + (255,))
                 u = (t - card["t0"]) / max(card["t1"] - card["t0"], 1e-3)
                 k0, k1 = st["word_cards"].get("scale_from_to", [0.86, 1.22])
-                sc = k0 + (k1 - k0) * (u ** 0.6)  # quick, continuous scale-up
-                ci = card["img"].resize((max(1, int(card["img"].width * sc)), max(1, int(card["img"].height * sc))), Image.BILINEAR)
-                img.alpha_composite(ci, (int(W / 2 - ci.width / 2), int(H / 2 - ci.height / 2)))
+                sc = k0 + (k1 - k0) * (0.5 - 0.5 * np.cos(np.pi * u))  # slow, continuous eased zoom
+                spec = st["word_cards"][card["bg"]]
+                ki, kb = kinetic_text(card["text"], spec["font"], spec["px"], hex_rgb(spec["color"]), t - card["t0"],
+                                      stagger=0.04, dur_in=0.3, track=0.06 * u)
+                ci = ki.resize((max(1, int(ki.width * sc)), max(1, int(ki.height * sc))), Image.BILINEAR)
+                img.alpha_composite(ci, (int(W / 2 - ci.width / 2), int(H / 2 - (kb - spec["px"] * 0.35) * sc)))
             elif in_cta:
                 p = (t - cta["t0"]) * AF / 4
                 bs = spring(p)
@@ -943,6 +1108,8 @@ def main(plan_path):
                     img.alpha_composite(big, (int(W / 2 - big.width / 2), int(H * 0.52 - cta["kbo"] + bdy)))
                     sm, sdy = land(cta["small"], p)
                     img.alpha_composite(sm, (int(W / 2 - sm.width / 2), int(H * 0.52 - st["cta"]["big_px"] * 0.95 - cta["sbo"] + sdy)))
+        for lay_, (lx, ly) in front_lines:
+            img.alpha_composite(lay_, (int(lx), int(ly)))
         for gfx in graphics:
             draw_graphic(img, gfx, t)
         frame_out = np.asarray(img.convert("RGB"))

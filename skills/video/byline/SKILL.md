@@ -157,6 +157,19 @@ If the user wants something the scripts don't do (b-roll, music, new elements fr
   soft shadow. Graphics placed at ~0.71 height overlap the card's lower edge for depth. `mode: "full"` keeps full-screen b-roll.
 - Graphics: eased-back entrance (~0.5 s), gentle float, soft exit, a light shimmer sweep, and a frosted glass panel behind
   (`panel: false` to turn it off). Chips get the shimmer and fade out at the end of the list.
+- **Depth effects (need the person matte):** set `matte_model` to MODNet (`huggingface.co/Xenova/modnet`, file
+  `onnx/model.onnx`, Apache-2.0; `pip install onnxruntime`). The speaker is cut out on every frame (~0.1 s/frame, temporally smoothed).
+  - `behind`: giant text placed **behind the speaker** (`lines`, `font`, `px`, `x`, `y`, `grow`). Letters rise in one by one;
+    it scales with the camera. Keep it above the shoulders and short (one word) so the head doesn't hide it; use `x` to let
+    a big glyph peek out beside a shoulder (e.g. a giant serif "1").
+  - `lines` `orbit`: a glowing line that draws itself around the speaker at neck/shoulder level (`dy`), passing **behind** the
+    neck and in front of the chest, then retracts. Never at face height.
+- `lines` `swoosh`: a cubic-bezier light stroke (`pts`, 4 points as width/height fractions) that draws on and chases off
+  (trim-path animation). Use it to lead a b-roll card in, or to connect two elements.
+- Breaker cards are kinetic: letters rise one by one with blur, tracking widens, slow eased zoom.
+- Cutaway `reveal: "iris"`: full-screen b-roll opens as an expanding circle with a white rim.
+- Camera: plan `scales` as intentional moves - dolly in on the hook, pull back to reveal the text behind, push in on the key line.
+- `interp: "fast"` renders a quick 30 fps preview for checking placement; final renders use `fps: 60` with `interp: "mci"`.
 - `cutaways`: slow-motion b-roll, from the user's b-roll file (`file`) or a crop of the source (`crop`), with `slowmo` and a slow zoom.
 - `graphics` (motion graphics in the style DNA; every shape springs in from the centre with a bounce, drawn at 2x for smooth edges):
   - `bars`: bar chart growing bar by bar, `highlight` bar in blue ("top tier", "growth", "results").
