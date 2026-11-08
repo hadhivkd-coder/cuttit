@@ -7,7 +7,7 @@
 <meta name="description" content="12 Claude skills that turn clips, photos and ideas into reels. ₹299, one time.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800;900&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
 <style>
   :root { --ink:#0f0f10; --muted:#6b6b70; --line:#ececee; --soft:#f6f6f7; --accent:#3d5afe; }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -77,6 +77,14 @@
   .plan b { font-size:14px; }
   .pamt { font-size:28px; font-weight:900; letter-spacing:-1px; margin:4px 0 2px; }
   .plan span { font-size:13px; color:var(--muted); }
+  .feature { display:grid; grid-template-columns:150px 1fr; gap:22px; align-items:center; margin-top:28px; padding:18px; border-radius:22px; background:#0a0a0b; color:#f4f4f6; transition:transform .15s; }
+  .feature:hover { transform:translateY(-2px); }
+  .feature video { width:150px; aspect-ratio:9/16; object-fit:cover; border-radius:14px; display:block; }
+  .feature .eyebrow { color:#7d90ff; margin-bottom:6px; }
+  .feature .ft { font-family:"Playfair Display", Georgia, serif; font-style:italic; font-weight:600; font-size:48px; line-height:1; letter-spacing:-1px; }
+  .feature p { color:#a0a0aa; font-size:15px; margin:10px 0 14px; }
+  .fbtn { display:inline-block; background:#f4f4f6; color:#0a0a0b; font-weight:800; font-size:14px; padding:10px 16px; border-radius:10px; }
+  @media (max-width:520px) { .feature { grid-template-columns:110px 1fr; } .feature video { width:110px; } .feature .ft { font-size:38px; } }
   footer { border-top:1px solid var(--line); padding:28px 0 48px; font-size:13px; color:var(--muted); }
 </style>
 </head>
@@ -91,6 +99,15 @@
 </div></nav>
 
 <main class="col">
+  <a class="feature" href="/byline/">
+    <video src="/byline/demo.mp4" poster="/byline/poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
+    <div>
+      <div class="eyebrow">New · Skill 01</div>
+      <div class="ft">Byline</div>
+      <p>Premium editorial reels: text behind you, orbit lines, 3D b-roll cards, motion graphics. A new edit for every video.</p>
+      <span class="fbtn">See Byline · ₹99 →</span>
+    </div>
+  </a>
   <div class="hero">
     <div class="eyebrow">12 Claude skills · <span data-price="pack"></span></div>
     <h1>Your reels,<br><span>edited by Claude.</span></h1>

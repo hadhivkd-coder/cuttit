@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Byline: premium reel edits with Claude · cuttit</title>
+<meta name="description" content="Byline is a Claude skill that edits your talking-head video into a premium reel: text behind you, orbit lines, 3D b-roll cards, motion graphics and smooth 60 fps motion. ₹99.">
+<meta property="og:title" content="Byline: premium reel edits with Claude">
+<meta property="og:description" content="Text behind you, orbit lines, 3D b-roll cards, motion graphics. A new edit for every video. ₹99.">
+<meta property="og:image" content="/byline/poster.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0b; --ink:#f4f4f6; --muted:#9a9aa3; --line:#1f1f24; --panel:#121216; --blue:#2f7bff; --red:#ff3d55;
+    --sans: Poppins, system-ui, -apple-system, sans-serif; --serif: "Playfair Display", Georgia, serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  a { color:inherit; text-decoration:none; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 22px; }
+  nav { display:flex; justify-content:space-between; align-items:center; height:64px; }
+  .logo { font-weight:800; font-size:20px; letter-spacing:-0.6px; }
+  .logo i { font-style:normal; color:var(--blue); }
+  .navlink { font-size:14px; color:var(--muted); font-weight:500; }
+  .navlink:hover { color:var(--ink); }
+
+  .hero { display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px; align-items:center; padding:48px 0 80px; }
+  .eyebrow { font-size:12px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--blue); }
+  h1 { font-family:var(--serif); font-style:italic; font-weight:600; font-size:clamp(76px, 13vw, 132px); line-height:0.95; letter-spacing:-2px; margin:12px 0 18px; }
+  .lead { font-size:19px; color:var(--muted); max-width:520px; }
+  .lead b { color:var(--ink); font-weight:600; }
+  .buy { display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin:30px 0 12px; }
+  .price { font-size:44px; font-weight:800; letter-spacing:-1.5px; }
+  .price small { font-size:14px; color:var(--muted); font-weight:500; letter-spacing:0; margin-left:6px; }
+  .btn { display:inline-flex; align-items:center; gap:10px; height:56px; padding:0 28px; border-radius:14px; background:var(--ink); color:#0a0a0b; font-weight:700; font-size:16px; transition:transform .15s ease, opacity .15s ease; }
+  .btn:hover { transform:translateY(-1px); opacity:.92; }
+  .btn:focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
+  .note { font-size:13px; color:var(--muted); }
+
+  .phone { position:relative; justify-self:center; width:min(340px, 82vw); aspect-ratio:9/16; border-radius:38px; padding:10px; background:linear-gradient(160deg,#2a2a31,#0f0f12); box-shadow:0 40px 90px rgba(0,0,0,.6), 0 0 0 1px #2c2c33 inset; }
+  .phone video { width:100%; height:100%; object-fit:cover; border-radius:30px; display:block; background:#000; }
+  .sound { position:absolute; right:22px; bottom:22px; border:0; cursor:pointer; font:600 12px var(--sans); color:#fff; background:rgba(0,0,0,.55); backdrop-filter:blur(8px); padding:8px 12px; border-radius:999px; }
+  .glow { position:absolute; inset:-30%; background:radial-gradient(closest-side, rgba(47,123,255,.22), transparent 70%); z-index:-1; filter:blur(10px); }
+
+  section { padding:72px 0; border-top:1px solid var(--line); }
+  h2 { font-size:clamp(30px, 4.6vw, 44px); font-weight:700; letter-spacing:-1.4px; line-height:1.08; max-width:720px; text-wrap:balance; }
+  h2 em { font-family:var(--serif); font-style:italic; font-weight:600; letter-spacing:-0.5px; }
+  .sub { color:var(--muted); margin:14px 0 34px; max-width:620px; }
+
+  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:24px; }
+  .card .k { font-size:12px; color:var(--blue); font-weight:700; letter-spacing:1px; }
+  .card h3 { font-size:18px; font-weight:600; margin:10px 0 6px; letter-spacing:-0.3px; }
+  .card p { color:var(--muted); font-size:14.5px; }
+
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  th, td { text-align:left; padding:14px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:12px; color:var(--muted); font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+  td:first-child { font-weight:600; white-space:nowrap; }
+  td:last-child { color:var(--muted); }
+  .tablewrap { overflow-x:auto; border:1px solid var(--line); border-radius:18px; background:var(--panel); }
+
+  .steps { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; counter-reset:s; }
+  .step { counter-increment:s; padding:22px; border-radius:18px; border:1px solid var(--line); }
+  .step::before { content:counter(s, decimal-leading-zero); font-family:var(--serif); font-style:italic; font-size:34px; color:var(--blue); display:block; margin-bottom:6px; }
+  .step b { display:block; margin-bottom:4px; }
+  .step span { color:var(--muted); font-size:14.5px; }
+
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  ul.list { list-style:none; display:grid; gap:10px; }
+  ul.list li { padding-left:26px; position:relative; color:var(--muted); }
+  ul.list li b { color:var(--ink); font-weight:600; }
+  ul.list li::before { content:""; position:absolute; left:2px; top:9px; width:11px; height:6px; border-left:2.5px solid var(--blue); border-bottom:2.5px solid var(--blue); transform:rotate(-45deg); }
+
+  .final { text-align:center; padding:96px 0; }
+  .final h2 { margin:0 auto 10px; }
+  .final .buy { justify-content:center; }
+
+  details { border-bottom:1px solid var(--line); padding:18px 0; }
+  summary { cursor:pointer; font-weight:600; list-style:none; display:flex; justify-content:space-between; gap:16px; }
+  summary::after { content:"+"; color:var(--muted); font-weight:400; }
+  details[open] summary::after { content:"–"; }
+  details p { color:var(--muted); margin-top:10px; font-size:15px; }
+
+  footer { border-top:1px solid var(--line); padding:28px 0 48px; color:var(--muted); font-size:13px; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns:1fr; gap:36px; padding-top:24px; }
+    .phone { order:-1; }
+    .grid, .steps, .two { grid-template-columns:1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="logo" href="/">cutt<i>it</i></a>
+    <a class="navlink" href="#buy">Get Byline →</a>
+  </nav>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Skill 01 · Claude skill</div>
+      <h1>Byline</h1>
+      <p class="lead">Turn any talking-head video into a <b>premium editorial reel</b>: text behind you, glowing lines that orbit you, b-roll as floating 3D cards, motion graphics and silky 60 fps motion. <b>A new edit for every video.</b></p>
+      <div class="buy" id="buy">
+        <div class="price">₹99<small>one-time</small></div>
+        <a class="btn" data-link="byline" href="#">Get Byline →</a>
+      </div>
+      <p class="note">Instant access · Works with Claude Code on your computer</p>
+    </div>
+    <div class="phone">
+      <div class="glow"></div>
+      <video id="demo" src="demo.mp4" poster="poster.jpg" autoplay muted loop playsinline preload="metadata"></video>
+      <button class="sound" id="sound" type="button">Tap for sound</button>
+    </div>
+  </div>
+
+  <section>
+    <div class="eyebrow">What it does</div>
+    <h2>Edits that make people ask <em>“how did he do that?”</em></h2>
+    <p class="sub">Everything in the demo was made by Claude with Byline, from one 10-second clip and four stock b-roll shots.</p>
+    <div class="grid">
+      <div class="card"><div class="k">DEPTH</div><h3>Text behind you</h3><p>Giant words rise letter by letter behind your head and shoulders. You stay in front.</p></div>
+      <div class="card"><div class="k">LINES</div><h3>Orbit & swoosh lines</h3><p>Glowing strokes draw themselves around you, behind your neck and across the frame, then retract.</p></div>
+      <div class="card"><div class="k">B-ROLL</div><h3>3D floating cards</h3><p>B-roll flies in as tilted 3D cards over a blurred you, or opens with an iris reveal.</p></div>
+      <div class="card"><div class="k">TYPE</div><h3>Pop-in captions</h3><p>1-2 word captions that pop and hard-cut, with big serif-italic power words.</p></div>
+      <div class="card"><div class="k">GRAPHICS</div><h3>Motion graphics on glass</h3><p>Bar charts, padlocks, counters, calendars, icon chips: eased, floating, with a light shimmer.</p></div>
+      <div class="card"><div class="k">FEEL</div><h3>Flash transitions & sound</h3><p>Soft white light flashes, smooth camera moves, and sound effects synced to every moment.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Not a template</div>
+    <h2>Claude reads your script and <em>designs</em> the edit.</h2>
+    <p class="sub">Byline finds the beats in what you say and picks the effect that fits each one, so no two videos look the same.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>When you say…</th><th>Byline might use</th></tr></thead>
+        <tbody>
+          <tr><td>A hook</td><td>A giant word behind you while the camera dollies in</td></tr>
+          <tr><td>A secret</td><td>A padlock that clicks shut, or an iris reveal</td></tr>
+          <tr><td>A myth / mistake</td><td>Black-and-white with a red strike through a graphic</td></tr>
+          <tr><td>A number</td><td>A giant serif number peeking out from behind your shoulder</td></tr>
+          <tr><td>A list or apps</td><td>Icon chips that spring in one by one</td></tr>
+          <tr><td>Growth or results</td><td>A bar chart building itself</td></tr>
+          <tr><td>Proof</td><td>Your b-roll as a floating 3D card</td></tr>
+          <tr><td>Your call to action</td><td>A massive serif keyword with the instructions cycling underneath</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">How it works</div>
+    <h2>Four steps. No timeline.</h2>
+    <div class="steps" style="margin-top:30px">
+      <div class="step"><b>Add Byline to Claude</b><span>Put the skill folder in Claude Code. One-time setup.</span></div>
+      <div class="step"><b>Send your video</b><span>Choose “customise” or “leave it to me”.</span></div>
+      <div class="step"><b>Approve the plan</b><span>Claude shows every effect and why, then renders a quick preview.</span></div>
+      <div class="step"><b>Post it</b><span>Final 60 fps reel, 1080×1920, ready to upload.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="two">
+      <div>
+        <div class="eyebrow">What you get</div>
+        <h2 style="font-size:30px;margin:10px 0 20px">The skill + the engine</h2>
+        <ul class="list">
+          <li><b>SKILL.md</b>: the full Byline style and creative engine</li>
+          <li><b>Tested renderer</b>: Python scripts that build the reel</li>
+          <li><b>Style file</b>: exact fonts, colours, timings and sound levels</li>
+          <li><b>Example edit plan</b> from the demo</li>
+          <li><b>Setup guide</b>, step by step</li>
+        </ul>
+      </div>
+      <div>
+        <div class="eyebrow">What you need</div>
+        <h2 style="font-size:30px;margin:10px 0 20px">Honest requirements</h2>
+        <ul class="list">
+          <li><b>A computer</b> with Claude Code (desktop app or VS Code). It doesn't render on a phone.</li>
+          <li><b>Free tools:</b> Python and ffmpeg. Claude installs the rest.</li>
+          <li><b>Render time:</b> about 2 minutes per second of video at 60 fps.</li>
+          <li><b>Your own talking-head video</b>, ideally 1080p. B-roll is optional.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Questions</div>
+    <details><summary>Do I need editing experience?</summary><p>No. You talk to Claude in plain language. Byline tells Claude exactly how to edit.</p></details>
+    <details><summary>Can I use my own fonts, colours, music and sound effects?</summary><p>Yes. Choose “customise” and Byline asks for them. Otherwise it uses its own defaults and generates its own sound effects and music bed.</p></details>
+    <details><summary>Will every video look the same?</summary><p>No. Byline reads your script and picks different effects for different beats, with one hero moment per video.</p></details>
+    <details><summary>Can I use it for client work?</summary><p>Yes. The reels you make are yours to post or sell. Please don't resell or share the skill files themselves.</p></details>
+    <details><summary>Can I edit on my phone?</summary><p>Not yet. Byline renders on a computer. Want it done for you? Our WhatsApp editing service is coming soon.</p></details>
+  </section>
+
+  <div class="final">
+    <h2>Make your next reel a <em>Byline</em>.</h2>
+    <div class="buy"><div class="price">₹99<small>one-time</small></div><a class="btn" data-link="byline" href="#">Get Byline →</a></div>
+  </div>
+</div>
+
+<footer><div class="wrap">© <span id="y"></span> cuttit · Not affiliated with Anthropic. Claude is a trademark of Anthropic. Demo b-roll from Pexels.</div></footer>
+
+<script>
+  // Fill in before going live: your CreatePie (or checkout) link for Byline
+  const LINKS = { byline: "https://example.com/REPLACE-with-your-CreatePie-link-for-Byline" };
+  document.querySelectorAll("[data-link]").forEach(a => { a.href = LINKS[a.dataset.link]; a.target = "_blank"; a.rel = "noopener"; });
+  document.getElementById("y").textContent = new Date().getFullYear();
+  const v = document.getElementById("demo"), b = document.getElementById("sound");
+  b.addEventListener("click", () => { v.muted = !v.muted; if (!v.muted) { v.currentTime = 0; v.play(); } b.textContent = v.muted ? "Tap for sound" : "Sound on"; });
+</script>
+</body>
+</html>
