@@ -11,7 +11,7 @@ generated music bed with voice ducking, "stat" graphic element, watermark preser
 """
 import json, os, re, subprocess, sys, wave
 import numpy as np, cv2
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -692,6 +692,25 @@ def main(plan_path):
         bgi = Image.fromarray(bgarr.clip(0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR).convert("RGBA")
         if fs.get("type") == "black":
             return Image.new("RGBA", (W, H), (0, 0, 0, 255))
+        if fs.get("type") == "motivation":
+            # reference bar: white column, yellow fill rising from the bottom, small round avatar beside it
+            yel = (255, 214, 0); bw = fs.get("bar_w", 300); bx = fs.get("bar_x", 0.36) * W
+            top, bot = H * fs.get("bar_top", 0.36), H * 0.98
+            colm = Image.new("RGBA", (W, H), (0, 0, 0, 0)); cd_ = ImageDraw.Draw(colm)
+            wq = ease_out(min(1, age / 0.25))
+            cd_.rectangle((bx - bw / 2, bot - (bot - top) * wq, bx + bw / 2, bot), fill=(245, 245, 245, 255))
+            q = ease_out(min(1, max(0, age - 0.1) / fs.get("fill_s", 1.0))) * fs.get("fill", 0.85)
+            cd_.rectangle((bx - bw / 2, bot - (bot - top) * q, bx + bw / 2, bot), fill=yel + (255,))
+            gl = colm.split()[3].filter(ImageFilter.GaussianBlur(50)).point(lambda v: int(v * 0.45))
+            bgi.alpha_composite(Image.merge("RGBA", (*[Image.new("L", (W, H), v) for v in yel], gl))); bgi.alpha_composite(colm)
+            if fs.get("avatar"):
+                av = Image.open(os.path.join(wd, fs["avatar"])).convert("RGBA").resize((110, 110))
+                mk = Image.new("L", (110, 110), 0); ImageDraw.Draw(mk).ellipse((0, 0, 109, 109), fill=255); av.putalpha(mk)
+                sa = spring((age - 0.2) * AF / 5, (0.0, 0.75, 1.12, 1.0))
+                if sa > 0.02:
+                    av2 = av.resize((max(1, int(110 * sa)), max(1, int(110 * sa))))
+                    bgi.alpha_composite(av2, (int(bx - bw / 2 - 70 - av2.width / 2), int(top + 60 - av2.height / 2)))
+            return bgi
         if fs.get("type", "tallbar") == "tallbar":
             yel = hex_rgb(st["colors"].get("power", "#FFD700"))
             q = ease_out(min(1, age / fs.get("fill_s", 0.9)))
@@ -705,6 +724,8 @@ def main(plan_path):
     def draw_graphic(img, g, t):
         if not (g["t0"] <= t < g["t1"]): return
         cy = g.get("y", 0.7) * H; age = t - g["t0"]
+        if g["type"] == "flamebar": flamebar(img, g, t); return
+        if g["type"] == "typepill": typepill(img, g, t); return
         if g["type"] in ("progress", "week", "polaroid"):
             ember_graphic(img, g, t, age); return
         if g["type"] in ("ring", "burst"):
@@ -890,11 +911,12 @@ def main(plan_path):
                 lay.alpha_composite(kl, (int(b_.get("x", 0.5) * W - kl.width / 2), int(ly - kb * grow)))
         return lay
 
-    def stroke_path(pts, width, color, glow=True):
+    def stroke_path(pts, width, color, glow=True, glow_px=9, glow_k=0.8):
         """Smooth glowing stroke along a list of points, returned as an RGBA layer (2x supersampled)."""
         if len(pts) < 2: return None
         xs = [p_[0] for p_ in pts]; ys = [p_[1] for p_ in pts]
-        x0_, y0_ = int(min(xs) - 60), int(min(ys) - 60); x1_, y1_ = int(max(xs) + 60), int(max(ys) + 60)
+        mg = int(60 + glow_px * 2.5)
+        x0_, y0_ = int(min(xs) - mg), int(min(ys) - mg); x1_, y1_ = int(max(xs) + mg), int(max(ys) + mg)
         K = 2; lw, lh = (x1_ - x0_) * K, (y1_ - y0_) * K
         if lw <= 0 or lh <= 0: return None
         lay = Image.new("RGBA", (lw, lh), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
@@ -904,7 +926,7 @@ def main(plan_path):
         for cx_, cy_ in (P[0], P[-1]): d.ellipse((cx_ - r, cy_ - r, cx_ + r, cy_ + r), fill=color + (255,))
         lay = lay.resize((lw // K, lh // K), Image.LANCZOS)
         if glow:
-            g_ = lay.split()[3].filter(ImageFilter.GaussianBlur(9)).point(lambda v: int(v * 0.8))
+            g_ = lay.split()[3].filter(ImageFilter.GaussianBlur(glow_px)).point(lambda v: int(min(255, v * glow_k)))
             gl = Image.merge("RGBA", (*[Image.new("L", lay.size, c) for c in color], g_))
             lay = Image.alpha_composite(gl, lay)
         return lay, (x0_, y0_)
@@ -943,8 +965,129 @@ def main(plan_path):
                 C = np.array(l_["pts"], np.float32) * np.array([W, H], np.float32)
                 u = np.linspace(a0, a1, 120)[:, None]
                 B = ((1 - u) ** 3) * C[0] + 3 * ((1 - u) ** 2) * u * C[1] + 3 * (1 - u) * u ** 2 * C[2] + u ** 3 * C[3]
-                front.append(stroke_path([tuple(p_) for p_ in B], wdt, col))
+                (back if l_.get("behind") else front).append(stroke_path([tuple(p_) for p_ in B], wdt, col, glow_px=l_.get("glow_px", 9), glow_k=l_.get("glow_k", 0.8)))
         return [x for x in back if x], [x for x in front if x]
+
+    # ---------- Ember lockups: reference-style typography ----------
+    LK_FONTS = st.get("lockup_fonts", {})
+    lk_cache = {}
+
+    def lk_font(kind, size):
+        key = (kind, size)
+        if key not in lk_cache:
+            spec = LK_FONTS.get(kind, {"file": st["fonts"]["sans"]["file"]})
+            f_ = ImageFont.truetype(os.path.join(wd, plan.get("font_dir", "fonts"), spec["file"]), size)
+            if spec.get("axes"):
+                try: f_.set_variation_by_axes(spec["axes"])
+                except Exception: pass
+            lk_cache[key] = f_
+        return lk_cache[key]
+
+    GRAD = {"gold": [(255, 236, 80), (247, 158, 11)], "silver": [(255, 255, 255), (186, 186, 196)],
+            "white": [(255, 255, 255), (236, 226, 208)], "plain": [(255, 255, 255), (255, 255, 255)]}
+
+    def lk_text(text, kind, size, fill="plain", extrude=False, tracking=0.0):
+        """Text with a vertical gradient fill, soft drop shadow and optional dark extrusion. Returns (RGBA, baseline)."""
+        key = ("t", text, kind, size, fill, extrude, tracking)
+        if key in lk_cache: return lk_cache[key]
+        f_ = lk_font(kind, size); pad = int(size * 0.5)
+        wdt = int(sum(f_.getlength(c) + tracking * size for c in text)) + 2 * pad
+        hgt = int(size * 1.6) + 2 * pad; base = pad + int(size * 1.15)
+        m = Image.new("L", (wdt, hgt), 0); d = ImageDraw.Draw(m); x = pad
+        for ch_ in text:
+            d.text((x, base), ch_, font=f_, fill=255, anchor="ls"); x += f_.getlength(ch_) + tracking * size
+        c0, c1 = GRAD.get(fill, GRAD["plain"])
+        top = base - size * 0.8; bot = base + size * 0.12
+        yy_ = np.clip((np.arange(hgt)[:, None] - top) / max(bot - top, 1), 0, 1)
+        g_ = (np.array(c0)[None, None, :] * (1 - yy_[..., None]) + np.array(c1)[None, None, :] * yy_[..., None])
+        g_ = np.repeat(g_, wdt, axis=1).astype(np.uint8)
+        txt = Image.fromarray(g_, "RGB").convert("RGBA"); txt.putalpha(m)
+        out_ = Image.new("RGBA", (wdt, hgt), (0, 0, 0, 0))
+        sh = m.filter(ImageFilter.GaussianBlur(size * 0.10)).point(lambda v: int(v * 0.55))
+        out_.alpha_composite(Image.merge("RGBA", (*[Image.new("L", m.size, 0)] * 3, sh)), (0, int(size * 0.06)))
+        if extrude:
+            ex = m.point(lambda v: int(v * 0.7))
+            for k_ in range(1, max(2, int(size * 0.05))):
+                out_.alpha_composite(Image.merge("RGBA", (Image.new("L", m.size, 40), Image.new("L", m.size, 28), Image.new("L", m.size, 20), ex)), (0, k_))
+        out_.alpha_composite(txt)
+        lk_cache[key] = (out_, base)
+        return out_, base
+
+    lockups = []
+    for L_ in plan.get("lockups", []):
+        L_ = dict(L_); L_["t0"] = T(L_["t0"]); L_["t1"] = T(L_["t1"])
+        L_["small"] = [dict(x_, t=T(x_["t"])) for x_ in L_.get("small", [])]
+        if L_.get("big"): L_["big"] = dict(L_["big"], t=T(L_["big"]["t"]))
+        lockups.append(L_)
+
+    def render_lockup(L_, t):
+        age = t - L_["t0"]; dur = max(L_["t1"] - L_["t0"], 0.1); u = min(1, age / dur)
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        dx, dy = (np.array(L_.get("drift", [0, 0])) * u).tolist()
+        gz = 1 + L_.get("zoom", 0.04) * u
+        cxL, cyL = L_.get("x", 0.5) * W, L_.get("y", 0.6) * H
+        def place(im, ax, ay, sc=1.0):
+            if sc != 1.0: im = im.resize((max(1, int(im.width * sc)), max(1, int(im.height * sc))), Image.BILINEAR)
+            px_ = cxL + (ax - cxL) * gz + dx; py_ = cyL + (ay - cyL) * gz + dy
+            lay.alpha_composite(im, (int(px_ - im.width / 2), int(py_ - im.height / 2)))
+        for sm in L_["small"]:
+            a_ = (t - sm["t"]) / 0.22
+            if a_ <= 0: continue
+            e = ease_out(a_)
+            im, bo = lk_text(sm["text"], sm.get("font", "round"), sm.get("px", 52), sm.get("fill", "plain"))
+            if e < 1: im = im.copy(); im.putalpha(im.split()[3].point(lambda v: int(v * e)))
+            place(im, sm.get("x", 0.5) * W, sm.get("y", 0.5) * H + 22 * (1 - e), gz)
+        b_ = L_.get("big")
+        if b_ and t >= b_["t"]:
+            im, bo = lk_text(b_["text"], b_.get("font", "round"), b_.get("px", 220), b_.get("fill", "gold"), b_.get("extrude", False), b_.get("tracking", 0.0))
+            e = ease_out_expo((t - b_["t"]) / b_.get("reveal_s", 0.32))
+            if e < 1:  # rises from behind a line at the baseline
+                shift = int(im.height * 0.55 * (1 - e)); clip = bo + int(b_.get("px", 220) * 0.10)
+                tmp = Image.new("RGBA", im.size, (0, 0, 0, 0)); tmp.alpha_composite(im.crop((0, 0, im.width, max(1, im.height - shift))), (0, shift))
+                mk = Image.new("L", im.size, 0); ImageDraw.Draw(mk).rectangle((0, 0, im.width, clip), fill=255)
+                tmp.putalpha(ImageChops.multiply(tmp.split()[3], mk)); im = tmp
+            place(im, b_.get("x", 0.5) * W, b_.get("y", 0.6) * H, gz * (1 + b_.get("grow", 0.06) * min(1, (t - b_["t"]) / dur)))
+        return lay
+
+    def flamebar(img, g, t):
+        """Reference fire progress pill: dark glass, orange gradient fill, 🔥 in a dark round knob."""
+        age = t - g["t0"]; sc = spring(age * AF / 5, (0.0, 0.75, 1.12, 1.0))
+        if sc <= 0.02: return
+        Wd, Hd, K = g.get("w", 760), g.get("h", 96), 2
+        L2 = Image.new("RGBA", (Wd * K, Hd * K), (0, 0, 0, 0)); d = ImageDraw.Draw(L2)
+        d.rounded_rectangle((0, 0, Wd * K - 1, Hd * K - 1), Hd * K // 2, fill=(28, 24, 22, 215))
+        q = min(1, max(0, (t - T(g["fill_t0"])) / max(T(g["fill_t1"]) - T(g["fill_t0"]), 0.1))) * g.get("value", 0.72)
+        xf = max(Hd * K, (Wd * K) * q)
+        gr_ = np.linspace(0, 1, int(xf))[None, :, None] * (np.array([255, 196, 40]) - np.array([255, 120, 0])) + np.array([255, 120, 0])
+        gim = Image.fromarray(np.repeat(gr_, Hd * K, 0).astype(np.uint8)).convert("RGBA")
+        mk = Image.new("L", gim.size, 0); ImageDraw.Draw(mk).rounded_rectangle((0, 0, gim.width - 1, gim.height - 1), Hd * K // 2, fill=255); gim.putalpha(mk)
+        L2.alpha_composite(gim)
+        R = int(Hd * K * 0.46); kx = int(xf - Hd * K / 2); ky = Hd * K // 2
+        d.ellipse((kx - R, ky - R, kx + R, ky + R), fill=(30, 26, 24, 255))
+        em = emoji_img("🔥", int(R * 1.3))
+        if em: L2.alpha_composite(em, (kx - em.width // 2, ky - em.height // 2))
+        L2 = L2.resize((Wd, Hd), Image.LANCZOS)
+        if sc != 1.0: L2 = L2.resize((max(1, int(Wd * sc)), max(1, int(Hd * sc))), Image.BILINEAR)
+        img.alpha_composite(L2, (int(g.get("x", 0.5) * W - L2.width / 2), int(g.get("y", 0.65) * H - L2.height / 2)))
+
+    def typepill(img, g, t):
+        """White pill that types the spoken words, joined to the element above by two dots."""
+        words_ = [(T(a), b) for a, b in g["words"]]
+        cur = [w for a, w in words_ if a <= t]
+        if not cur: return
+        txt = " ".join(cur); f_ = lk_font("round", g.get("px", 44))
+        age = t - words_[0][0]; sc = spring(age * AF / 5, (0.0, 0.75, 1.12, 1.0))
+        tw = f_.getlength(txt); w_ = max(g.get("min_w", 320), tw + 80); h_ = int(g.get("px", 44) * 1.9)
+        cx_, cy_ = g.get("x", 0.6) * W, g.get("y", 0.75) * H
+        d = ImageDraw.Draw(img)
+        for k_, r_ in ((0, 9), (1, 12)):
+            yy0 = cy_ - h_ / 2 - 58 + k_ * 30; d.ellipse((cx_ - r_, yy0 - r_, cx_ + r_, yy0 + r_), fill=(255, 255, 255, 240))
+        P = Image.new("RGBA", (int(w_) + 40, h_ + 40), (0, 0, 0, 0)); pd = ImageDraw.Draw(P)
+        pd.rounded_rectangle((20, 20, 20 + w_, 20 + h_), h_ // 2, fill=(255, 255, 255, 250))
+        pd.text((20 + 40, 20 + h_ / 2), txt, font=f_, fill=(25, 25, 28, 255), anchor="lm")
+        P = drop_shadow(P, blur=10, alpha=0.4, dy=6)
+        if sc != 1.0: P = P.resize((max(1, int(P.width * sc)), max(1, int(P.height * sc))), Image.BILINEAR)
+        img.alpha_composite(P, (int(cx_ - P.width / 2), int(cy_ - P.height / 2)))
 
     # 4) frames
     dec = subprocess.Popen(["ffmpeg", "-v", "error", "-i", base, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
@@ -1131,8 +1274,11 @@ def main(plan_path):
         if lines:
             back_l, front_lines = line_layers(t, s_eff)
             if cw: front_lines, back_l = back_l + front_lines, []
+        behind_lk = [L_ for L_ in lockups if L_.get("behind") and L_["t0"] <= t < L_["t1"]]
         if matte_sess is not None and not cw:
             bl_ = draw_behind_layer(t, s_eff)
+            for L_ in behind_lk:
+                bl_ = bl_ or Image.new("RGBA", (W, H), (0, 0, 0, 0)); bl_.alpha_composite(render_lockup(L_, t))
             if bl_ is not None or back_l:
                 m_ = person_matte(fr)
                 m_ = cv2.warpAffine(m_, np.float32([[s_eff, 0, anchor[0] * (1 - s_eff)], [0, s_eff, anchor[1] * (1 - s_eff)]]), (W, H))[..., None]
@@ -1290,6 +1436,9 @@ def main(plan_path):
                     img.alpha_composite(sm, (int(W / 2 - sm.width / 2), int(H * 0.52 - st["cta"]["big_px"] * 0.95 - cta["sbo"] + sdy)))
         for lay_, (lx, ly) in front_lines:
             img.alpha_composite(lay_, (int(lx), int(ly)))
+        for L_ in lockups:
+            if L_["t0"] <= t < L_["t1"] and not (L_.get("behind") and matte_sess is not None and not cw):
+                img.alpha_composite(render_lockup(L_, t))
         for gfx in graphics:
             draw_graphic(img, gfx, t)
         frame_out = np.asarray(img.convert("RGB"))

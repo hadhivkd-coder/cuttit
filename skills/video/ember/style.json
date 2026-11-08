@@ -214,5 +214,33 @@
   },
   "grade": {
     "ffmpeg": "colorbalance=rs=0.06:gs=0.02:bs=-0.07:rm=0.05:gm=0.01:bm=-0.05:rh=0.03:bh=-0.04,eq=contrast=1.14:saturation=1.15:brightness=-0.02,unsharp=5:5:0.5"
+  },
+  "lockup_fonts": {
+    "round": {
+      "file": "DMSans.ttf",
+      "axes": [
+        14,
+        800
+      ]
+    },
+    "small": {
+      "file": "DMSans.ttf",
+      "axes": [
+        14,
+        600
+      ]
+    },
+    "condensed": {
+      "file": "Oswald.ttf",
+      "axes": [
+        500
+      ]
+    },
+    "geo": {
+      "file": "Poppins-SemiBold.ttf"
+    },
+    "caps": {
+      "file": "BebasNeue.ttf"
+    }
   }
 }
