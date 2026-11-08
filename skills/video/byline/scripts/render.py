@@ -165,6 +165,39 @@ def pill(fonts, text, colors, glow, st):
     return img
 
 
+def spring(p, keys=(0.80, 0.98, 1.05, 1.0)):
+    """Piecewise spring through keyframes over p in 0..1 (e.g. 4 frames: 80% -> overshoot -> 100%)."""
+    p = min(max(p, 0), 1)
+    if p >= 1: return keys[-1]
+    x = p * (len(keys) - 1); i = int(x); f = x - i
+    f = 0.5 - 0.5 * np.cos(np.pi * f)
+    return keys[i] + (keys[i + 1] - keys[i]) * f
+
+
+def tight_shadow(img, st):
+    sh = st["captions"].get("shadow_tight", {"blur": 2, "opacity": 0.85, "dy": 2})
+    a = img.split()[3]
+    s = a.filter(ImageFilter.GaussianBlur(sh["blur"])).point(lambda v: int(v * sh["opacity"]))
+    out = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    out.alpha_composite(Image.merge("RGBA", (*[Image.new("L", img.size, 0)] * 3, s)), (0, sh["dy"]))
+    return Image.alpha_composite(out, img)
+
+
+def chip_flat(fonts, text, color, st, shape="pill"):
+    c = st["chips"]
+    t_img, base, adv = word_img(fonts, text, c.get("pop_font", "sans"), c.get("pop_px", 58))
+    bb = t_img.getbbox(); t_img = t_img.crop(bb)
+    ph, pw = c["padding_px"]
+    w, h = t_img.width + 2 * pw, t_img.height + 2 * ph
+    img = Image.new("RGBA", (w + 20, h + 20), (0, 0, 0, 0))
+    r = h // 2 if shape == "pill" else c.get("box_radius", 22)
+    sh = Image.new("L", img.size, 0); ImageDraw.Draw(sh).rounded_rectangle((10, 14, 10 + w, 14 + h), r, fill=90)
+    img.alpha_composite(Image.merge("RGBA", (*[Image.new("L", img.size, 0)] * 3, sh.filter(ImageFilter.GaussianBlur(4)))))
+    ImageDraw.Draw(img).rounded_rectangle((10, 10, 10 + w, 10 + h), r, fill=hex_rgb(color) + (255,))
+    img.alpha_composite(t_img, (10 + pw, 10 + ph))
+    return img
+
+
 def scrim(w, h, strength=0.42):
     yy, xx = np.mgrid[0:h, 0:w]
     d = ((xx - w / 2) / (w / 2)) ** 2 + ((yy - h / 2) / (h / 2)) ** 2
@@ -258,14 +291,14 @@ def main(plan_path):
         c["w"] = []
         for i, w in enumerate(c["words"]):
             pw = i in c.get("power", [])
-            img, bo, adv = word_img(fonts, w, "serif" if pw else "sans", cs["serif_px"] if pw else cs["sans_px"])
+            img, bo, adv = word_img(fonts, w, "serif" if pw else "sans", cs.get("serif_px", int(cs["sans_px"] * 1.2)) if pw else cs["sans_px"])
             c["w"].append(dict(img=styled(img), glow=styled(img, shadow=False, glow=0.9, glow_px=22) if pw else None,
                                bo=bo, adv=adv, power=pw))
         tot = sum(x["adv"] for x in c["w"]) + gap * (len(c["w"]) - 1)
         x = W / 2 - tot / 2
         for x_ in c["w"]: x_["x"] = x; x += x_["adv"] + gap
         c["width"] = tot
-        g, gbo, gadv = word_img(fonts, " ".join(c["words"]), "sans", cs["ghost_px"])
+        g, gbo, gadv = word_img(fonts, " ".join(c["words"]), "sans", cs.get("ghost_px", 50))
         g = styled(g); g.putalpha(g.split()[3].point(lambda v: int(v * 0.38))); c["ghost"], c["gbo"] = g, gbo
     for c in cards:
         spec = st["word_cards"][c["bg"]]
@@ -275,6 +308,29 @@ def main(plan_path):
         col = st["colors"]["chip_" + c.get("color", "blue")]; gl = rgba_css(st["colors"]["chip_" + c.get("color", "blue") + "_glow"])
         for it in c["items"]: it["img"] = pill(fonts, it["text"], col, gl, st)
     blue = hex_rgb(st["colors"]["chip_blue"][0])
+    pop = cs.get("mode", "pop") == "pop"
+    if pop:
+        for c in caps:
+            c["pw"] = []
+            for i_, w_ in enumerate(c["words"]):
+                pw_ = i_ in c.get("power", [])
+                im_, bo_, adv_ = word_img(fonts, w_, "serif" if pw_ else "sans", int(cs["sans_px"] * cs.get("power_scale", 1.2)) if pw_ else cs["sans_px"])
+                c["pw"].append(dict(img=tight_shadow(im_, st), bo=bo_, adv=adv_, power=pw_))
+            gap_ = cs["sans_px"] * 0.28
+            tot_ = sum(x["adv"] for x in c["pw"]) + gap_ * (len(c["pw"]) - 1)
+            x_ = W / 2 - tot_ / 2
+            for q_ in c["pw"]: q_["x"] = x_; x_ += q_["adv"] + gap_
+        for c in chips:
+            for it in c["items"]:
+                it["img"] = chip_flat(fonts, it["text"], st["colors"]["chip_" + it.get("color", c.get("color", "blue"))][0], st, c.get("shape", "pill"))
+        if cta and cta.get("cycle"):
+            bimg, bbo, _ = word_img(fonts, cta["word"].upper(), "serif", st["cta"]["big_px"])
+            cta["bigp"], cta["bbo"] = tight_shadow(bimg, st), bbo
+            cta["cyc"] = []
+            for tt_, txt_ in cta["cycle"]:
+                im_, bo_, _ = word_img(fonts, txt_, "sans", st["cta"]["small_px"])
+                cta["cyc"].append((T(tt_), tight_shadow(im_, st), bo_))
+            cta["t1"] = T(cta["t1"]) if "t1" in cta else 1e9
     for s in stats:
         big, bbo, badv = word_img(fonts, s["text"], "serif", s.get("px", 360))
         big = styled(big, glow=0.0)
@@ -494,66 +550,118 @@ def main(plan_path):
             out[y0:y0 + 2 * r, x0:x0 + 2 * r] = region * (1 - wm_mask) + src_fr[y0:y0 + 2 * r, x0:x0 + 2 * r] * wm_mask
         img = Image.fromarray(np.clip(out, 0, 255).astype(np.uint8)).convert("RGBA")
 
-        card = next((c for c in cards if c["t0"] <= t < c["t1"]), None)
-        if card:
-            img = Image.new("RGBA", (W, H), card["bgc"] + (255,))
-            p = (t - card["t0"]) * FPS / st["word_cards"]["enter"]["frames"]
-            ci, cdy = land(card["img"], p, rise=30, blur=26, s_from=1.18)
-            cz = 1 + 0.03 * (t - card["t0"])  # slow push on the card
-            ci = ci.resize((int(ci.width * cz), int(ci.height * cz)), Image.BILINEAR)
-            img.alpha_composite(ci, (int(W / 2 - ci.width / 2), int(H / 2 - ci.height / 2 + cdy)))
+        if pop:
+            card = next((c for c in cards if c["t0"] <= t < c["t1"]), None)
+            in_cta = cta and cta.get("cycle") and cta["t0"] <= t < cta.get("t1", 1e9)
+            if card:
+                img = Image.new("RGBA", (W, H), card["bgc"] + (255,))
+                u = (t - card["t0"]) / max(card["t1"] - card["t0"], 1e-3)
+                k0, k1 = st["word_cards"].get("scale_from_to", [0.86, 1.22])
+                sc = k0 + (k1 - k0) * (u ** 0.6)  # quick, continuous scale-up
+                ci = card["img"].resize((max(1, int(card["img"].width * sc)), max(1, int(card["img"].height * sc))), Image.BILINEAR)
+                img.alpha_composite(ci, (int(W / 2 - ci.width / 2), int(H / 2 - ci.height / 2)))
+            elif in_cta:
+                p = (t - cta["t0"]) * FPS / 4
+                bs = spring(p)
+                bi = cta["bigp"].resize((int(cta["bigp"].width * bs), int(cta["bigp"].height * bs)), Image.BILINEAR)
+                cyb = H * 0.50
+                img.alpha_composite(bi, (int(W / 2 - bi.width / 2), int(cyb - cta["bbo"] * bs)))
+                cur_ = [x for x in cta["cyc"] if x[0] <= t]
+                if cur_:
+                    ct_, ci_, cbo_ = cur_[-1]
+                    ss = spring((t - ct_) * FPS / 4)
+                    si = ci_.resize((int(ci_.width * ss), int(ci_.height * ss)), Image.BILINEAR)
+                    img.alpha_composite(si, (int(W / 2 - si.width / 2), int(cyb + st["cta"]["small_px"] * 1.5 - cbo_ * ss)))
+            else:
+                y = cap_base
+                c = next((c for c in caps if c["t0"] <= t < c["t1"]), None)
+                ch = next((c for c in chips if c["t0"] <= t < c["t1"]), None)
+                if c and not ch:
+                    hgt = int(cs["sans_px"] * 4); base_ = int(cs["sans_px"] * 2.6)
+                    line = Image.new("RGBA", (W, hgt), (0, 0, 0, 0))
+                    for q_ in c["pw"]:
+                        im_ = q_["img"]
+                        if q_["power"]:  # slow continuous scale-up while on screen
+                            g_ = 1 + cs.get("power_grow_per_s", 0.10) * (t - c["t0"])
+                            im_ = im_.resize((int(im_.width * g_), int(im_.height * g_)), Image.BILINEAR)
+                            cxw = q_["x"] + q_["adv"] / 2; pad_ = (q_["img"].width - q_["adv"]) / 2
+                            line.alpha_composite(im_, (int(cxw - im_.width / 2), int(base_ - q_["bo"] * g_ + (g_ - 1) * cs["sans_px"] * 0.3)))
+                        else:
+                            line.alpha_composite(im_, (int(q_["x"] - (im_.width - q_["adv"]) / 2), int(base_ - q_["bo"])))
+                    ps = spring((t - c["t0"]) * FPS / cs.get("pop_frames", 4))
+                    if ps != 1.0:
+                        line = line.resize((int(W * ps), int(hgt * ps)), Image.BILINEAR)
+                    img.alpha_composite(line, (int(W / 2 - line.width / 2), int(y - base_ * ps)))
+                if ch:
+                    shown = [it for it in ch["items"] if it["t"] <= t]
+                    hs = [it["img"].height for it in shown]
+                    yy = y - 30 - (sum(hs) + st["chips"]["stack_gap_px"] * (len(shown) - 1)) / 2
+                    for it, h0 in zip(shown, hs):
+                        sc = spring((t - it["t"]) * FPS / st["chips"].get("pop_frames", 8), (0.0, 0.7, 1.22, 0.93, 1.0))
+                        a_ = it["img"].resize((max(1, int(it["img"].width * sc)), max(1, int(it["img"].height * sc))), Image.BILINEAR)
+                        img.alpha_composite(a_, (int(W / 2 - a_.width / 2), int(yy + h0 / 2 - a_.height / 2)))
+                        yy += h0 + st["chips"]["stack_gap_px"]
         else:
-            y = cap_base
-            c = next((c for c in caps if c["t0"] <= t < c["t1"]), None)
-            stat = next((s for s in stats if s["t0"] <= t < s["t1"]), None)
-            ch = next((c for c in chips if c["t0"] <= t < c["t1"]), None)
-            if (c or ch) and not stat:
-                img.alpha_composite(scr, (int(W / 2 - scr.width / 2), int(y - scr.height * 0.62)))
-            if c and not stat:
-                prev = next((q for q in reversed(caps) if q["t1"] <= c["t0"] + 1e-6 and c["t0"] - q["t1"] < 0.4), None)
-                if prev and not any(cd["t0"] >= prev["t1"] - 1e-6 and cd["t1"] <= c["t0"] + 1e-6 for cd in cards):
-                    top = y - (cs["serif_px"] if c.get("power") else cs["sans_px"]) * 0.78
-                    gi = prev["ghost"]; img.alpha_composite(gi, (int(W / 2 - gi.width / 2), int(top - 12 - prev["gbo"])))
-                for wd_, wt in zip(c["w"], c["wt"]):
-                    if t < wt: continue
-                    p = (t - wt) * FPS / 6
-                    im, ddy = land(wd_["img"], p)
-                    cx = wd_["x"] + wd_["adv"] / 2
-                    sc = im.width / wd_["img"].width
-                    if wd_["power"] and wd_["glow"] is not None:
-                        pulse = max(0, 1 - (t - wt) * FPS / 14)
-                        if p >= 1 and pulse > 0:
-                            gl = wd_["glow"].copy(); gl.putalpha(gl.split()[3].point(lambda v: int(v * pulse)))
-                            img.alpha_composite(gl, (int(cx - gl.width / 2), int(y - wd_["bo"])))
-                    img.alpha_composite(im, (int(cx - im.width / 2), int(y - wd_["bo"] * sc + ddy)))
-                    if wd_["power"]:  # underline sweep
-                        q = ease_out(((t - wt) * FPS - 4) / 8)
-                        if q > 0:
-                            uw = int(wd_["adv"] * 0.92 * q); ux = int(wd_["x"] + wd_["adv"] * 0.04)
-                            uy = int(y + cs["serif_px"] * 0.12)
-                            ImageDraw.Draw(img).rounded_rectangle((ux, uy, ux + max(uw, 2), uy + 7), 3, fill=blue + (235,))
-            if stat:
-                p = (t - stat["t0"]) * FPS / 7
-                si = scale_fade(stat["img"], p, 0.3, 1.1)
-                sy = y + stat.get("dy", 40)
-                img.alpha_composite(si, (int(W / 2 - si.width / 2), int(sy - si.height / 2)))
-                if t - stat["t0"] > 0.2:
-                    li, ldy = land(stat["label_img"], (t - stat["t0"] - 0.2) * FPS / 6)
-                    img.alpha_composite(li, (int(W / 2 - li.width / 2), int(sy + stat.get("px", 360) * 0.42 - stat["label_img"].height * 0.35 + ldy)))
-            if ch:
-                shown = [it for it in ch["items"] if it["t"] <= t]
-                hs = [it["img"].height - 140 for it in shown]
-                yy = y - 40 - (sum(hs) + st["chips"]["stack_gap_px"] * (len(shown) - 1)) / 2
-                for it, h0 in zip(shown, hs):
-                    a = scale_fade(it["img"], (t - it["t"]) * FPS / st["chips"]["enter"]["frames"])
-                    img.alpha_composite(a, (int(W / 2 - a.width / 2), int(yy + h0 / 2 - a.height / 2)))
-                    yy += h0 + st["chips"]["stack_gap_px"]
-            if cta and t >= cta["t0"]:
-                p = (t - cta["t0"]) * FPS / 6
-                big, bdy = land(cta["big"], p)
-                img.alpha_composite(big, (int(W / 2 - big.width / 2), int(H * 0.52 - cta["kbo"] + bdy)))
-                sm, sdy = land(cta["small"], p)
-                img.alpha_composite(sm, (int(W / 2 - sm.width / 2), int(H * 0.52 - st["cta"]["big_px"] * 0.95 - cta["sbo"] + sdy)))
+            card = next((c for c in cards if c["t0"] <= t < c["t1"]), None)
+            if card:
+                img = Image.new("RGBA", (W, H), card["bgc"] + (255,))
+                p = (t - card["t0"]) * FPS / st["word_cards"].get("enter", {}).get("frames", 5)
+                ci, cdy = land(card["img"], p, rise=30, blur=26, s_from=1.18)
+                cz = 1 + 0.03 * (t - card["t0"])  # slow push on the card
+                ci = ci.resize((int(ci.width * cz), int(ci.height * cz)), Image.BILINEAR)
+                img.alpha_composite(ci, (int(W / 2 - ci.width / 2), int(H / 2 - ci.height / 2 + cdy)))
+            else:
+                y = cap_base
+                c = next((c for c in caps if c["t0"] <= t < c["t1"]), None)
+                stat = next((s for s in stats if s["t0"] <= t < s["t1"]), None)
+                ch = next((c for c in chips if c["t0"] <= t < c["t1"]), None)
+                if (c or ch) and not stat:
+                    img.alpha_composite(scr, (int(W / 2 - scr.width / 2), int(y - scr.height * 0.62)))
+                if c and not stat:
+                    prev = next((q for q in reversed(caps) if q["t1"] <= c["t0"] + 1e-6 and c["t0"] - q["t1"] < 0.4), None)
+                    if prev and not any(cd["t0"] >= prev["t1"] - 1e-6 and cd["t1"] <= c["t0"] + 1e-6 for cd in cards):
+                        top = y - (cs.get("serif_px", int(cs["sans_px"] * 1.2)) if c.get("power") else cs["sans_px"]) * 0.78
+                        gi = prev["ghost"]; img.alpha_composite(gi, (int(W / 2 - gi.width / 2), int(top - 12 - prev["gbo"])))
+                    for wd_, wt in zip(c["w"], c["wt"]):
+                        if t < wt: continue
+                        p = (t - wt) * FPS / 6
+                        im, ddy = land(wd_["img"], p)
+                        cx = wd_["x"] + wd_["adv"] / 2
+                        sc = im.width / wd_["img"].width
+                        if wd_["power"] and wd_["glow"] is not None:
+                            pulse = max(0, 1 - (t - wt) * FPS / 14)
+                            if p >= 1 and pulse > 0:
+                                gl = wd_["glow"].copy(); gl.putalpha(gl.split()[3].point(lambda v: int(v * pulse)))
+                                img.alpha_composite(gl, (int(cx - gl.width / 2), int(y - wd_["bo"])))
+                        img.alpha_composite(im, (int(cx - im.width / 2), int(y - wd_["bo"] * sc + ddy)))
+                        if wd_["power"]:  # underline sweep
+                            q = ease_out(((t - wt) * FPS - 4) / 8)
+                            if q > 0:
+                                uw = int(wd_["adv"] * 0.92 * q); ux = int(wd_["x"] + wd_["adv"] * 0.04)
+                                uy = int(y + cs.get("serif_px", int(cs["sans_px"] * 1.2)) * 0.12)
+                                ImageDraw.Draw(img).rounded_rectangle((ux, uy, ux + max(uw, 2), uy + 7), 3, fill=blue + (235,))
+                if stat:
+                    p = (t - stat["t0"]) * FPS / 7
+                    si = scale_fade(stat["img"], p, 0.3, 1.1)
+                    sy = y + stat.get("dy", 40)
+                    img.alpha_composite(si, (int(W / 2 - si.width / 2), int(sy - si.height / 2)))
+                    if t - stat["t0"] > 0.2:
+                        li, ldy = land(stat["label_img"], (t - stat["t0"] - 0.2) * FPS / 6)
+                        img.alpha_composite(li, (int(W / 2 - li.width / 2), int(sy + stat.get("px", 360) * 0.42 - stat["label_img"].height * 0.35 + ldy)))
+                if ch:
+                    shown = [it for it in ch["items"] if it["t"] <= t]
+                    hs = [it["img"].height - 140 for it in shown]
+                    yy = y - 40 - (sum(hs) + st["chips"]["stack_gap_px"] * (len(shown) - 1)) / 2
+                    for it, h0 in zip(shown, hs):
+                        a = scale_fade(it["img"], (t - it["t"]) * FPS / st["chips"]["enter"]["frames"])
+                        img.alpha_composite(a, (int(W / 2 - a.width / 2), int(yy + h0 / 2 - a.height / 2)))
+                        yy += h0 + st["chips"]["stack_gap_px"]
+                if cta and t >= cta["t0"]:
+                    p = (t - cta["t0"]) * FPS / 6
+                    big, bdy = land(cta["big"], p)
+                    img.alpha_composite(big, (int(W / 2 - big.width / 2), int(H * 0.52 - cta["kbo"] + bdy)))
+                    sm, sdy = land(cta["small"], p)
+                    img.alpha_composite(sm, (int(W / 2 - sm.width / 2), int(H * 0.52 - st["cta"]["big_px"] * 0.95 - cta["sbo"] + sdy)))
         for gfx in graphics:
             draw_graphic(img, gfx, t)
         rs = radial_strength(t)
@@ -590,15 +698,15 @@ def main(plan_path):
     if plan.get("auto_sfx", True):
         card_t = [c["t0"] for c in cards] + [c["t1"] for c in cards]
         events += [(t, "whoosh") for t, _ in scales[1:] if all(abs(t - ct) > 0.15 for ct in card_t)]
-        events += [(c["t0"] - plan.get("riser_s", 0.5) + 2 / FPS, "riser") for c in cards if not any(abs(c["t0"] - d["t1"]) < 0.05 for d in cards)]
+        if st["audio"].get("risers", False): events += [(c["t0"] - plan.get("riser_s", 0.5) + 2 / FPS, "riser") for c in cards if not any(abs(c["t0"] - d["t1"]) < 0.05 for d in cards)]
         if smooth:
             events = [e for e in events if e[1] != "whoosh"] + [(p_ - 0.12, "whoosh") for p_ in trans_pts if all(abs(p_ - c["t0"]) > 0.05 for c in cards)]
-        if "highlight" in bank:
+        if "highlight" in bank and not pop:
             events += [(c["wt"][i_] + 4 / FPS, "highlight") for c in caps for i_ in c.get("power", [])]
     for ts, nm in events:
         if nm not in bank: print("no sfx for", nm); continue
         s = bank[nm] * 10 ** ((levels.get(nm, -18) + 1) / 20)
-        start = int(max(ts - 2 / FPS, 0) * SR); end = min(start + len(s), len(mix))
+        start = int(max(ts - st["audio"].get("sfx_lead_frames", 0) / FPS, 0) * SR); end = min(start + len(s), len(mix))
         if end > start: mix[start:end] += s[: end - start]
     mus = st["audio"]["music"]
     if plan.get("music", "generated") == "generated":

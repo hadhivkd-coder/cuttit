@@ -29,7 +29,7 @@ about, or reply "defaults" to accept everything.
 
 1. **Video:** Please share your talking-head video (best 15-90 s).
 2. **Fonts:** Do you have specific fonts (e.g. your brand fonts)?
-   Default: the reference style, a clean sans (Inter Tight) + an elegant italic serif (Instrument Serif).
+   Default: the reference style, a heavy sans (Poppins Bold) + a high-contrast italic serif (Playfair Display Italic).
 3. **Colours:** Do you want your brand colours for the chips and highlights?
    Default: blue for good/right, red for bad/wrong, with black and white cards.
 4. **Music:** Do you want background music?
@@ -58,7 +58,7 @@ the style's defaults.
   Hype = cards every 5-10 s, punch-ins every 0.8-1.5 s, chips on every list.
 
 ## 2. Prepare
-1. Fonts: download Inter Tight and Instrument Serif (Google Fonts, free licence) into `fonts/`.
+1. Fonts: download Poppins Bold and Playfair Display Italic (Google Fonts, free licence) into `fonts/`.
 2. Transcribe with faster-whisper, `word_timestamps=True` (model `small`; `medium` for non-English).
    Show the transcript, let the user fix names and spelling.
 3. Remove dead air: cut every gap longer than 0.25 s at -35 dB, keeping 0.06 s padding (jump cuts are part of the look).
@@ -68,22 +68,27 @@ the style's defaults.
    chips, B&W punches, b-roll and punch-ins go, and each SFX. Show the plan to the user as a readable list and wait for "ok".
 
 ## 3. Style rules (how to plan)
-**Captions**
-- 1-3 words per caption. Break at natural phrase ends, never mid-name or mid-number.
-- One **power word** per sentence (the word that carries the meaning: a result, a number, a feeling, a contrast).
-  It is set in the serif italic at the large size; the rest of the caption is in the sans.
-- The previous caption line stays above the new one as a faded ghost (style.json `ghost`) for one caption, then disappears.
-- Position: from style.json `y_rule`. Never cover the mouth or eyes.
-- Enter: 5-frame blur-in with a tiny overshoot. Exit: cut.
+**Captions (typography + "pop-in")**
+- Fonts: heavy sans (Poppins Bold) for standard text; high-contrast serif italic (Playfair Display Italic) **only** for the power word.
+- Crisp white text with a tight, high-opacity, low-distance black drop shadow. No heavy shadows, glows, outlines, underlines or ghost lines.
+- Centred horizontally at chest/neck level, never over the face.
+- 1, 2 or at most 3 words per chunk. Never a full sentence.
+- Entry: the whole chunk pops from 80% to 100% in 4 frames with a slight spring overshoot.
+- Exit: hard cut on the exact frame the next chunk starts. No fades, slides or blur.
+- **Power word:** the single most important conceptual word **per sentence** switches to the serif italic, 20% larger than the sans,
+  and keeps scaling up very slowly (about +10%/s) while on screen.
 
-**Full-screen word cards**
-- Every 8-15 s, take the strongest phrase (the hook, the key idea, the twist) and replace the video with 1-5 cards,
-  one word each, alternating black (sans, white) and white (serif italic, black). Voice keeps playing.
-- Each card gets a **deep whoosh**. Card length = that word's spoken length (0.35-1.2 s).
+**Full-screen breaker cards**
+- For high-impact single words: replace the video with solid black (white sans) or solid white (black serif italic),
+  one word dead centre. Consecutive cards alternate black/white. Voice keeps playing.
+- The word scales up quickly and continuously while on screen (86% to 122%).
+- Every card hits **exactly** on its first frame with a heavy, bass-driven whoosh.
 
-**Chips (lists and labels)**
-- When the speaker lists 2-5 things, pop one blue pill chip per item exactly when it is said, stacked at chest level. Each gets a **pop**.
-- Contrast/quote pairs ("a cheap editor asks... / a great editor asks..."): red pill for the weak side, blue pill for the strong side.
+**UI elements**
+- List chips: when the speaker lists items, no normal caption - a flat blue rounded pill with white text per item, stacked near
+  the speaker, scaling 0% to 100% with a heavy spring overshoot, each synced to a sharp click/pop.
+- Quote/comparison boxes (e.g. "$20 vs $2,000"): clean rounded rectangles (`"shape": "box"`), red for the weak side and blue for the
+  strong side, scaling up from the centre with an overshoot, synced to a paper swoosh or pop.
 
 **Camera**
 - Default: slow, smooth, eased zooms (100% to ~107%) that change direction every 2-3 s. Never snap.
@@ -100,8 +105,8 @@ the style's defaults.
 - A name card (blue pill + small sans subtitle) only for people in the user's own footage, with their permission.
 
 **Ending (CTA)**
-- Last 3-4 s: clear everything else. Small sans "comment" above the keyword in huge serif italic, uppercase, in quotes,
-  with a soft glow. **Whoosh** + **low hit** on entry. Hold to the end.
+- At the final call to action, clear the captions: the primary trigger word (e.g. COMMENT) huge and centred, and the
+  secondary instruction text cycling underneath it in time with the speech (`cta.cycle`).
 
 ## 4. Sound
 - Voice: normalise to -14 LUFS (`loudnorm=I=-14:TP=-1.5`).
@@ -120,7 +125,7 @@ the style's defaults.
 ## 5. Render (tested scripts included)
 Use the scripts in `scripts/` instead of writing a renderer from scratch:
 - Setup once: `pip install faster-whisper numpy pillow "opencv-python-headless<5"` and ffmpeg on PATH.
-  Put the two fonts in `fonts/` next to the plan (`InterTight.ttf`, `InstrumentSerif-Italic.ttf`).
+  Put the two fonts in `fonts/` next to the plan (`Poppins-Bold.ttf`, `PlayfairDisplay-Italic.ttf`).
 - Transcribe: decode audio first (`ffmpeg -i input.mp4 -ac 1 -ar 16000 -f s16le a.raw`) and pass the numpy array to
   faster-whisper; this avoids a PyAV version clash. If the model download fails on a "xet" error, set `HF_HUB_DISABLE_XET=1`.
 - Write `plan.json` in the format of `scripts/plan.example.json` (all times in the source video's seconds).

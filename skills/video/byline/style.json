@@ -13,18 +13,19 @@
   },
   "fonts": {
     "sans": {
-      "family": "Inter Tight",
-      "weight": 720,
-      "tracking": -0.03,
-      "source": "Google Fonts (OFL)",
-      "file": "InterTight.ttf"
+      "family": "Poppins",
+      "file": "Poppins-Bold.ttf",
+      "weight": null,
+      "tracking": -0.01,
+      "source": "Google Fonts (OFL)"
     },
     "serif": {
-      "family": "Instrument Serif",
+      "family": "Playfair Display",
       "style": "italic",
-      "tracking": -0.04,
-      "source": "Google Fonts (OFL)",
-      "file": "InstrumentSerif-Italic.ttf"
+      "file": "PlayfairDisplay-Italic.ttf",
+      "weight": 600,
+      "tracking": -0.01,
+      "source": "Google Fonts (OFL)"
     }
   },
   "colors": {
@@ -49,42 +50,30 @@
       3
     ],
     "y_rule": "chin_y + 0.17*H, clamped to 0.44H..0.62H",
-    "sans_px": 82,
-    "serif_px": 150,
-    "ghost_px": 50,
-    "ghost_offset_px": -78,
-    "shadow": "0 2px 6px rgba(0,0,0,0.6)",
-    "serif_glow": "0 0 18px rgba(255,255,255,0.35)",
-    "enter": {
-      "frames": 5,
-      "blur_px": [
-        14,
-        0
-      ],
-      "scale": [
-        0.88,
-        1.04,
-        1.0
-      ],
-      "opacity": [
-        0,
-        1
-      ]
-    },
-    "exit": "cut",
-    "emphasis_share": "1 power word per sentence, max 1 per 2 s"
+    "sans_px": 76,
+    "exit": "hard cut on the frame the next chunk starts",
+    "emphasis_share": "1 power word per sentence, max 1 per 2 s",
+    "mode": "pop",
+    "power_scale": 1.2,
+    "power_grow_per_s": 0.1,
+    "pop_frames": 4,
+    "shadow_tight": {
+      "blur": 2,
+      "opacity": 0.85,
+      "dy": 2
+    }
   },
   "word_cards": {
     "black": {
       "bg": "#0A0A0A",
       "font": "sans",
-      "px": 84,
+      "px": 104,
       "color": "#FFFFFF"
     },
     "white": {
       "bg": "#FAFAFA",
       "font": "serif",
-      "px": 156,
+      "px": 132,
       "color": "#0A0A0A"
     },
     "per_word_s": [
@@ -96,27 +85,20 @@
       5
     ],
     "alternate": true,
-    "enter": {
-      "frames": 5,
-      "blur_px": [
-        16,
-        0
-      ],
-      "scale": [
-        0.92,
-        1.0
-      ]
-    },
     "every_s": [
       8,
       15
     ],
-    "sfx": "deep_whoosh"
+    "sfx": "deep_whoosh",
+    "scale_from_to": [
+      0.86,
+      1.22
+    ]
   },
   "chips": {
     "radius": "pill",
     "padding_px": [
-      20,
+      18,
       40
     ],
     "font": "serif",
@@ -134,7 +116,11 @@
     },
     "stack_gap_px": 18,
     "hold": "until the list ends + 0.5 s",
-    "sfx": "pop"
+    "sfx": "pop",
+    "pop_font": "sans",
+    "pop_px": 60,
+    "pop_frames": 8,
+    "box_radius": 22
   },
   "camera": {
     "punch_in_scale": [
@@ -168,8 +154,8 @@
   },
   "cta": {
     "small": "comment",
-    "small_px": 52,
-    "big_px": 170,
+    "small_px": 60,
+    "big_px": 180,
     "big_font": "serif",
     "uppercase": true,
     "quotes": true,
@@ -202,7 +188,9 @@
       "glitch": -19,
       "low_hit": -13,
       "riser": -22
-    }
+    },
+    "risers": false,
+    "sfx_lead_frames": 0
   },
   "pacing": {
     "avg_shot_s": [
