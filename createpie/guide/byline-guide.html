@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Byline: The Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  :root { --ink:#111114; --muted:#5d5d68; --line:#e7e7ec; --soft:#f5f6f9; --blue:#2f7bff; --red:#ff3d55; --dark:#0a0a0b; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: Poppins, sans-serif; color:var(--ink); font-size:10.5pt; line-height:1.6; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .page { width:210mm; min-height:297mm; padding:20mm 18mm 18mm; position:relative; page-break-after:always; overflow:hidden; }
+  .page:last-child { page-break-after:auto; }
+  .foot { position:absolute; bottom:9mm; left:18mm; right:18mm; display:flex; justify-content:space-between; font-size:8pt; color:#9a9aa3; }
+  .serif { font-family:"Playfair Display", Georgia, serif; font-style:italic; font-weight:600; }
+  .eyebrow { font-size:8.5pt; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--blue); margin-bottom:6px; }
+  h1 { font-size:30pt; line-height:1.05; letter-spacing:-1px; margin-bottom:6mm; }
+  h2 { font-size:15pt; letter-spacing:-0.3px; margin:7mm 0 2.5mm; }
+  h3 { font-size:11.5pt; margin:5mm 0 1.5mm; }
+  p { margin-bottom:2.8mm; }
+  .muted { color:var(--muted); }
+  ul, ol { margin:0 0 3mm 5mm; }
+  li { margin-bottom:1.4mm; }
+  code, .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:9pt; background:var(--soft); border:1px solid var(--line); border-radius:4px; padding:0.3mm 1.4mm; }
+  pre { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:8.8pt; background:#0f1115; color:#e8e8ee; border-radius:8px; padding:4mm 5mm; margin:2mm 0 4mm; white-space:pre-wrap; line-height:1.5; }
+  .box { background:var(--soft); border:1px solid var(--line); border-radius:10px; padding:4mm 5mm; margin:3mm 0 4mm; }
+  .tip { border-left:3px solid var(--blue); background:#f2f6ff; padding:3mm 4.5mm; border-radius:0 8px 8px 0; margin:3mm 0 4mm; }
+  .warn { border-left:3px solid var(--red); background:#fff3f5; padding:3mm 4.5mm; border-radius:0 8px 8px 0; margin:3mm 0 4mm; }
+  table { width:100%; border-collapse:collapse; font-size:9.3pt; margin:2mm 0 4mm; }
+  th, td { text-align:left; padding:2.2mm 2.5mm; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:7.8pt; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+  td:first-child { font-weight:600; }
+  .imgs { display:flex; gap:4mm; margin:3mm 0 4mm; }
+  .imgs figure { flex:1; }
+  .imgs img { width:100%; height:56mm; object-fit:cover; object-position:center 30%; border-radius:8px; display:block; }
+  figcaption { font-size:8pt; color:var(--muted); margin-top:1.5mm; text-align:center; }
+  .steps { counter-reset:s; list-style:none; margin-left:0; }
+  .steps > li { counter-increment:s; position:relative; padding-left:11mm; margin-bottom:3.5mm; }
+  .steps > li::before { content:counter(s); position:absolute; left:0; top:-0.6mm; width:7mm; height:7mm; border-radius:50%; background:var(--ink); color:#fff; font-weight:700; font-size:9pt; display:grid; place-items:center; }
+  /* cover */
+  .cover { background:var(--dark); color:#f4f4f6; padding:0; }
+  .cover .inner { padding:24mm 18mm 0; }
+  .cover h1 { font-family:"Playfair Display", Georgia, serif; font-style:italic; font-weight:600; font-size:76pt; line-height:0.95; letter-spacing:-2px; margin:3mm 0 5mm; }
+  .cover .sub { font-size:14pt; color:#b5b5be; max-width:150mm; }
+  .cover .ba { display:flex; gap:6mm; padding:12mm 18mm 0; }
+  .cover .ba figure { flex:1; position:relative; }
+  .cover .ba img { width:100%; border-radius:12px; display:block; }
+  .tag { position:absolute; left:50%; transform:translateX(-50%); bottom:5mm; font-weight:700; font-size:10pt; padding:1.5mm 4mm; border-radius:6px; }
+  .tag.b { background:rgba(0,0,0,.7); color:#fff; } .tag.a { background:#fff; color:#111; }
+  .cover .foot { color:#6c6c76; }
+  .toc { list-style:none; margin:0; }
+  .toc li { display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding:2.4mm 0; margin:0; }
+  .toc li span:last-child { color:var(--muted); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<section class="page cover">
+  <div class="inner">
+    <div class="eyebrow">cuttit · Skill 01 · The complete guide</div>
+    <h1>Byline</h1>
+    <p class="sub">How to turn any talking-head video into a premium editorial reel with Claude: setup, your first edit, every option, and how this skill was built.</p>
+  </div>
+  <div class="ba">
+    <figure><img src="img/before.jpg" alt="Before: the raw clip"><span class="tag b">BEFORE</span></figure>
+    <figure><img src="img/a_0.45.jpg" alt="After: the Byline edit"><span class="tag a">AFTER</span></figure>
+  </div>
+  <div class="foot"><span>cuttit.createpie.store</span><span>Not affiliated with Anthropic. Claude is a trademark of Anthropic.</span></div>
+</section>
+
+<!-- CONTENTS -->
+<section class="page">
+  <div class="eyebrow">Contents</div>
+  <h1>Inside this guide</h1>
+  <ul class="toc">
+    <li><span>1. What Byline does</span><span>3</span></li>
+    <li><span>2. What you need</span><span>2</span></li>
+    <li><span>3. Setup, step by step (once)</span><span>4</span></li>
+    <li><span>4. Your first edit</span><span>5</span></li>
+    <li><span>5. Customise: the 10 options</span><span>6</span></li>
+    <li><span>6. How Byline designs your edit</span><span>7</span></li>
+    <li><span>7. B-roll, sound effects and music</span><span>8</span></li>
+    <li><span>8. Record for the best result</span><span>9</span></li>
+    <li><span>9. Prompt cheat sheet</span><span>9</span></li>
+    <li><span>10. Troubleshooting</span><span>10</span></li>
+    <li><span>11. How I built Byline with Claude</span><span>11</span></li>
+    <li><span>12. FAQ and licence</span><span>12</span></li>
+  </ul>
+  <div class="tip" style="margin-top:6mm"><b>What's in your download:</b> <code>byline/SKILL.md</code> (the skill), <code>byline/style.json</code> (the exact style values), <code>byline/scripts/</code> (the tested renderer), <code>byline/scripts/plan.example.json</code> (the demo's edit plan), and this guide.</div>
+  <div class="eyebrow" style="margin-top:8mm">2 · What you need</div>
+  <ul>
+    <li><b>A computer</b> (Mac, Windows or Linux; phones can't render) with <b>Claude Code</b>: the Claude desktop app's Code tab or the VS Code extension, on a paid Claude plan.</li>
+    <li><b>Python 3.10+</b> and <b>ffmpeg</b>. Both are free; Claude installs the Python packages for you.</li>
+    <li><b>Your talking-head video:</b> 1080p or better, 15–90 seconds works best.</li>
+    <li><b>Time:</b> a quick preview takes about 3 minutes; the final 60 fps render takes about 2 minutes per second of video.</li>
+  </ul>
+  <div class="foot"><span>Byline · The complete guide</span><span>2</span></div>
+</section>
+
+<!-- 1 + 2 -->
+<section class="page">
+  <div class="eyebrow">1 · What Byline does</div>
+  <h1>A premium edit, <span class="serif">designed for your script</span></h1>
+  <p>Byline is a <b>Claude skill</b>: a folder of instructions plus tested code that you add to Claude Code once. After that, you send Claude a talking-head video and say <i>"Edit this video with Byline."</i> Claude transcribes it, reads your script, designs an edit for it, and renders a finished 1080×1920 reel.</p>
+  <div class="imgs">
+    <figure><img src="img/a_0.45.jpg" alt=""><figcaption>Text behind you</figcaption></figure>
+    <figure><img src="img/a_1.4.jpg" alt=""><figcaption>B-roll as a 3D card</figcaption></figure>
+    <figure><img src="img/a_9.3.jpg" alt=""><figcaption>Orbit line + giant number</figcaption></figure>
+  </div>
+  <table>
+    <tr><th>Element</th><th>What it looks like</th></tr>
+    <tr><td>Pop-in captions</td><td>1–2 words at a time in Poppins Bold, popping 80→100% and hard-cutting; key words switch to a big Playfair Italic serif.</td></tr>
+    <tr><td>Text behind you</td><td>Giant words rise letter by letter <i>behind</i> your head. Claude cuts you out on every frame with an AI matte.</td></tr>
+    <tr><td>Lines</td><td>Glowing strokes that draw themselves: an orbit looping behind your neck, swooshes that lead b-roll in.</td></tr>
+    <tr><td>Breaker cards</td><td>Full-screen black or white word cards whose letters build one by one, synced to a bass whoosh.</td></tr>
+    <tr><td>Motion graphics</td><td>Bar charts, padlocks, hearts, counters, calendars and icon chips on frosted glass, floating and shimmering.</td></tr>
+    <tr><td>B-roll</td><td>Floating 3D cards over a blurred you, iris reveals, or full screen, in slow motion.</td></tr>
+    <tr><td>Feel</td><td>60 fps, smooth intentional camera moves, soft white light-flash transitions, synced sound effects, a quiet music bed.</td></tr>
+  </table>
+  <div class="foot"><span>Byline · The complete guide</span><span>3</span></div>
+</section>
+
+<!-- 3 SETUP -->
+<section class="page">
+  <div class="eyebrow">3 · Setup (once, about 10 minutes)</div>
+  <h1>Set up Byline</h1>
+  <ol class="steps">
+    <li><b>Install Claude Code.</b> Download the Claude desktop app from <code>claude.ai/download</code> and sign in, then open the <b>Code</b> tab. (Or install the Claude Code extension in VS Code.)</li>
+    <li><b>Install ffmpeg and Python.</b>
+      <pre>Mac (Terminal):
+  brew install ffmpeg python
+
+Windows (PowerShell):
+  winget install Gyan.FFmpeg
+  winget install Python.Python.3.12
+  (close and reopen PowerShell afterwards)</pre></li>
+    <li><b>Install the skill.</b> Unzip <code>byline-skill.zip</code>. Move the <code>byline</code> folder into your Claude skills folder:
+      <pre>Mac / Linux:  ~/.claude/skills/byline/
+Windows:      C:\Users\&lt;you&gt;\.claude\skills\byline\</pre>
+      You should now have <code>.../skills/byline/SKILL.md</code>.</li>
+    <li><b>Make a project folder</b> for your reels, e.g. <code>Documents/reels</code>, and open it in Claude Code.</li>
+    <li><b>Let Claude finish the setup.</b> Paste this:
+      <pre>Set up Byline in this folder: install the Python packages from the Byline skill,
+download the two fonts (Poppins Bold, Playfair Display Italic) into fonts/,
+and download the MODNet model into models/modnet.onnx as the skill says.
+Then confirm everything works.</pre></li>
+  </ol>
+  <div class="tip"><b>Check:</b> ask Claude <i>"Is Byline ready?"</i>. It should confirm ffmpeg, Python packages, fonts and the model.</div>
+  <div class="foot"><span>Byline · The complete guide</span><span>4</span></div>
+</section>
+
+<!-- 4 FIRST EDIT -->
+<section class="page">
+  <div class="eyebrow">4 · Your first edit</div>
+  <h1>From raw clip to <span class="serif">Byline</span></h1>
+  <ol class="steps">
+    <li><b>Drop your video</b> into the project folder (e.g. <code>myvideo.mp4</code>).</li>
+    <li><b>Ask:</b> <code>Edit myvideo.mp4 with Byline.</code></li>
+    <li><b>Choose how to work.</b> Claude asks: <i>A) Customise</i> (fonts, colours, music, ending…) or <i>B) Leave it to me</i>. For your first edit, choose B.</li>
+    <li><b>Check the transcript.</b> Fix any misspelled names.</li>
+    <li><b>Approve the edit plan.</b> Claude lists every moment: time, line, effect, sound. Example from the demo:
+      <table>
+        <tr><th>Line</th><th>Effect</th><th>Sound</th></tr>
+        <tr><td>"I've audited…"</td><td>"AUDITED" rises behind the speaker, camera dollies in</td><td>flash whoosh</td></tr>
+        <tr><td>"top tier personal brands"</td><td>Creator b-roll as a 3D card + bar chart on glass</td><td>pop</td></tr>
+        <tr><td>"their biggest secret"</td><td>Iris reveal of b-roll, padlock clicks shut</td><td>pop, click</td></tr>
+        <tr><td>"nothing … viral"</td><td>Kinetic black and white breaker cards</td><td>deep whoosh ×2</td></tr>
+        <tr><td>"Nobody cares… grid"</td><td>Black-and-white, "NOBODY" behind, heart "0", grid + red line</td><td>pop, wrong</td></tr>
+        <tr><td>"exactly one"</td><td>Orbit line behind the neck, giant serif "1" behind the shoulder</td><td>shine</td></tr>
+        <tr><td>"strategy session with me"</td><td>Massive "SESSION" CTA over a b-roll card, calendar check</td><td>impact, click</td></tr>
+      </table></li>
+    <li><b>Watch the preview</b> (fast, 30 fps). Say what to change.</li>
+    <li><b>Get the final reel</b> at 60 fps, then give notes one round at a time: <i>"the 1 is too big"</i>, <i>"less music"</i>, <i>"swap the heart for a counter"</i>.</li>
+  </ol>
+  <div class="foot"><span>Byline · The complete guide</span><span>5</span></div>
+</section>
+
+<!-- 5 CUSTOMISE -->
+<section class="page">
+  <div class="eyebrow">5 · Customise</div>
+  <h1>The 10 options</h1>
+  <p class="muted">Choose <b>A) Customise</b> and Claude asks these in one message. Answer only what you care about, or reply "defaults".</p>
+  <table>
+    <tr><th>Option</th><th>Default</th><th>You can…</th></tr>
+    <tr><td>1. Video</td><td>-</td><td>Send any talking-head clip</td></tr>
+    <tr><td>2. Fonts</td><td>Poppins Bold + Playfair Display Italic</td><td>Use your brand fonts</td></tr>
+    <tr><td>3. Colours</td><td>Blue = good, red = wrong</td><td>Use your brand colour</td></tr>
+    <tr><td>4. Music</td><td>A calm original bed, very low</td><td>Send your own track, or none</td></tr>
+    <tr><td>5. Sound effects</td><td>Generated by Byline</td><td>Use your own SFX pack (folder)</td></tr>
+    <tr><td>6. Ending</td><td>Your own CTA, or none</td><td>"comment WORD" with a massive keyword</td></tr>
+    <tr><td>7. Energy</td><td>Standard</td><td>Calm (fewer effects) or Hype (more, faster)</td></tr>
+    <tr><td>8. B-roll</td><td>A shot list with free links</td><td>Send your own clips</td></tr>
+    <tr><td>9. Language</td><td>Spoken language</td><td>Names and words to spell exactly</td></tr>
+    <tr><td>10. Handle</td><td>None</td><td>@yourname at the end</td></tr>
+  </table>
+  <div class="tip">Your answers override the style; everything else stays Byline. Claude summarises your choices in one line before it starts.</div>
+  <div class="foot"><span>Byline · The complete guide</span><span>6</span></div>
+</section>
+
+<!-- 6 ENGINE -->
+<section class="page">
+  <div class="eyebrow">6 · The creative engine</div>
+  <h1>Why no two Byline edits <span class="serif">look the same</span></h1>
+  <p>Byline isn't a template. Claude tags every sentence with a <b>beat</b>, then picks one effect per beat by meaning:</p>
+  <table>
+    <tr><th>Beat</th><th>Effects Claude chooses from</th></tr>
+    <tr><td>Hook</td><td>Giant word behind you + dolly-in · kinetic breaker card</td></tr>
+    <tr><td>Secret</td><td>Padlock that clicks shut · iris reveal</td></tr>
+    <tr><td>Myth / wrong</td><td>Black-and-white section · red strike or red X</td></tr>
+    <tr><td>List / apps</td><td>Icon chips (play, pin, check, heart)</td></tr>
+    <tr><td>Number</td><td>Giant serif number behind you · counter · ring + burst</td></tr>
+    <tr><td>Growth</td><td>Bar chart building itself · counter</td></tr>
+    <tr><td>Comparison</td><td>Red vs blue boxes · split-screen b-roll</td></tr>
+    <tr><td>Emotion</td><td>Heart with a number</td></tr>
+    <tr><td>Time / booking</td><td>Calendar with a check</td></tr>
+    <tr><td>Connecting ideas</td><td>Swoosh lines · orbit line behind your neck</td></tr>
+    <tr><td>Proof</td><td>B-roll as a 3D card · iris reveal · full screen</td></tr>
+    <tr><td>Call to action</td><td>Massive serif keyword, instructions cycling underneath</td></tr>
+  </table>
+  <h3>The composition rules</h3>
+  <ul>
+    <li><b>One hero moment</b> per video: the biggest effect, on your hook or strongest line.</li>
+    <li><b>Never the same effect twice in a row</b>; b-roll treatments and card colours rotate.</li>
+    <li><b>Something changes every 1.5–3 s</b>, with at most one graphic on screen besides the caption, plus calm stretches so the big moments land.</li>
+    <li><b>Nothing over your face.</b> If the library doesn't fit, Claude <b>designs a new element</b> in the same style and explains it in the plan.</li>
+  </ul>
+  <div class="foot"><span>Byline · The complete guide</span><span>7</span></div>
+</section>
+
+<!-- 7 BROLL SOUND -->
+<section class="page">
+  <div class="eyebrow">7 · B-roll, sound effects and music</div>
+  <h1>Make it richer</h1>
+  <h2>B-roll</h2>
+  <ol class="steps">
+    <li>Ask: <code>Give me a b-roll shot list for this video.</code> Claude lists one shot per moment, with free Pexels search links (vertical clips) and an AI-video prompt alternative.</li>
+    <li>Download 1–2 clips per line (Full HD) and put them in a <code>broll</code> folder in your project, named by number: <code>1_analytics.mp4</code>.</li>
+    <li>Say: <code>Use the clips in broll.</code> Claude turns them into floating 3D cards, iris reveals or full-screen slow motion.</li>
+  </ol>
+  <div class="imgs">
+    <figure><img src="img/a_1.4.jpg" alt=""><figcaption>3D card from the right</figcaption></figure>
+    <figure><img src="img/a_2.05.jpg" alt=""><figcaption>Iris reveal, full screen</figcaption></figure>
+    <figure><img src="img/a_7.6.jpg" alt=""><figcaption>Card from the bottom + chips</figcaption></figure>
+  </div>
+  <h2>Sound effects</h2>
+  <p>Byline generates its own whooshes, pops, clicks and hits, which you're free to use. To use your own pack, put it in a <code>sfx_pack</code> folder and say <code>Use my SFX pack.</code> Claude maps your files to roles: deep whoosh (cards), flash whoosh (transitions), pop/click (UI), wrong, impact, shine, count.</p>
+  <h2>Music</h2>
+  <p>A calm original bed plays very low and ducks under your voice. Send your own track (e.g. from the YouTube Audio Library) or say "no music". Never use copyrighted songs you don't have rights to.</p>
+  <div class="foot"><span>Byline · The complete guide</span><span>8</span></div>
+</section>
+
+<!-- 8 + 9 -->
+<section class="page">
+  <div class="eyebrow">8 · Record for the best result</div>
+  <h1>Feed Byline a good clip</h1>
+  <div class="grid2">
+    <ul>
+      <li><b>1080p or 4K</b>, vertical (9:16) if possible.</li>
+      <li><b>Chest-up framing</b> with some space above your head, for text behind you.</li>
+      <li><b>Even light</b> on your face; a simple background.</li>
+    </ul>
+    <ul>
+      <li><b>Clear audio:</b> a clip-on mic beats the camera mic.</li>
+      <li><b>A strong first line</b>: Byline turns it into the hook.</li>
+      <li><b>15–60 seconds</b>, one idea per video.</li>
+    </ul>
+  </div>
+  <div class="eyebrow" style="margin-top:8mm">9 · Prompt cheat sheet</div>
+  <h1 style="font-size:24pt">Copy, paste, edit</h1>
+  <table>
+    <tr><th>You want</th><th>Say</th></tr>
+    <tr><td>A full edit</td><td><code>Edit myvideo.mp4 with Byline.</code></td></tr>
+    <tr><td>Your style</td><td><code>Edit it with Byline. Customise.</code></td></tr>
+    <tr><td>Calmer / louder</td><td><code>Make it Calm.</code> · <code>Make it Hype.</code></td></tr>
+    <tr><td>A b-roll list</td><td><code>Give me a b-roll shot list with Pexels links.</code></td></tr>
+    <tr><td>A quick look</td><td><code>Render a fast preview first.</code></td></tr>
+    <tr><td>A different hero</td><td><code>Make the hero moment the number, behind me.</code></td></tr>
+    <tr><td>Swap an effect</td><td><code>Replace the heart with a counter at 0:05.</code></td></tr>
+    <tr><td>A CTA</td><td><code>End with "comment GUIDE".</code></td></tr>
+    <tr><td>A before/after</td><td><code>Make a before/after reel: raw clip, white flash, Byline edit.</code></td></tr>
+    <tr><td>Captions only</td><td><code>Only the captions and power words, no graphics.</code></td></tr>
+  </table>
+  <div class="foot"><span>Byline · The complete guide</span><span>9</span></div>
+</section>
+
+<!-- 10 TROUBLESHOOTING -->
+<section class="page">
+  <div class="eyebrow">10 · Troubleshooting</div>
+  <h1>If something goes wrong</h1>
+  <table>
+    <tr><th>Problem</th><th>Fix</th></tr>
+    <tr><td>"ffmpeg not found"</td><td>Install ffmpeg (section 3), then close and reopen the terminal or Claude Code.</td></tr>
+    <tr><td>Speech model download fails ("xet" error)</td><td>Tell Claude: <code>Set HF_HUB_DISABLE_XET=1 and retry.</code></td></tr>
+    <tr><td>"CascadeClassifier" error</td><td>OpenCV 5 is installed. Tell Claude: <code>Install opencv-python-headless&lt;5.</code></td></tr>
+    <tr><td>Render is very slow</td><td>Normal at 60 fps. Use <code>Render a fast preview first</code> to check placement, then render the final.</td></tr>
+    <tr><td>Text covers my face</td><td>Tell Claude the time: <code>At 0:03 the caption covers my face, move it lower.</code></td></tr>
+    <tr><td>Text behind me is hidden</td><td><code>Move the text behind me higher</code>, or shorten it to one word.</td></tr>
+    <tr><td>AI watermark gets cropped</td><td><code>Keep the watermark visible.</code> Byline anchors zooms on it.</td></tr>
+    <tr><td>Sound too loud / quiet</td><td><code>Lower the whooshes</code> · <code>Music quieter</code> · <code>No SFX</code>.</td></tr>
+    <tr><td>Wrong word in captions</td><td><code>At 0:04 it says X, it should be Y.</code></td></tr>
+  </table>
+  <div class="foot"><span>Byline · The complete guide</span><span>10</span></div>
+</section>
+
+<!-- 11 HOW I BUILT IT -->
+<section class="page">
+  <div class="eyebrow">11 · How I built Byline with Claude</div>
+  <h1>From one reference reel to <span class="serif">a product</span></h1>
+  <p>Everything in Byline, from the skill and the renderer to the tests, product page, share images, store copy and this guide, was made by working with Claude. This is the process, so you can use it for your own products.</p>
+  <ol class="steps">
+    <li><b>Pick a reference.</b> I chose a premium editorial reel I loved and saved it.</li>
+    <li><b>Break it down.</b> Claude studied it frame by frame (contact sheets, cut detection, colour and brightness curves) and measured the sound (onsets, spectrogram). I also asked Gemini to watch and listen, then Claude checked Gemini's notes against its measurements and corrected the mistakes.</li>
+    <li><b>Turn it into rules.</b> The style became a fixed "DNA" (fonts, colours, motion, sound) plus a creative engine that picks effects per beat.</li>
+    <li><b>Make it real code.</b> Claude wrote and tested a renderer (Python, ffmpeg, OpenCV, Whisper for captions, MODNet to cut out the speaker) on a 10-second AI clip.</li>
+    <li><b>Iterate honestly.</b> Nine versions. Each round I said what I didn't like ("not smooth", "add motion graphics", "white flash, not glitch") and Claude rebuilt it: 60 fps interpolation, 3D b-roll cards, text behind the speaker, orbit lines.</li>
+    <li><b>Package and sell.</b> Claude wrote the product page, share images, store copy and this guide. Claude in Chrome set up the store, using a handoff page written by the build chat.</li>
+  </ol>
+  <div class="imgs">
+    <figure><img src="img/before.jpg" alt=""><figcaption>Version 0: the raw clip</figcaption></figure>
+    <figure><img src="img/a_5.0.jpg" alt=""><figcaption>Version 9: depth, graphics, B&amp;W</figcaption></figure>
+    <figure><img src="img/a_10.4.jpg" alt=""><figcaption>Version 9: CTA over a 3D card</figcaption></figure>
+  </div>
+  <div class="foot"><span>Byline · The complete guide</span><span>11</span></div>
+</section>
+
+<!-- 12 FAQ -->
+<section class="page">
+  <div class="eyebrow">12 · FAQ and licence</div>
+  <h1>Questions</h1>
+  <h3>Do I need editing experience?</h3><p>No. You talk to Claude in plain language; the skill tells Claude exactly how to edit.</p>
+  <h3>Will every video look the same?</h3><p>No. Byline reads your script and picks different effects for different beats, with one hero moment per video.</p>
+  <h3>Can I use my own fonts, colours, music and sound effects?</h3><p>Yes. Choose "Customise" and answer the questions you care about.</p>
+  <h3>Can I use it on my phone?</h3><p>No. Rendering needs a computer with Claude Code.</p>
+  <h3>Can I use the reels for clients?</h3><p>Yes. The reels you make are yours to post or sell.</p>
+  <h3>What about stock footage and music?</h3><p>Use clips and tracks you have the rights to. Pexels clips are free to use in videos; don't redistribute the clips themselves. Byline's generated sound effects and music bed are yours to use.</p>
+  <div class="box" style="margin-top:8mm">
+    <b>Licence.</b> Your purchase lets you use Byline for your own and your clients' videos. Please don't share, resell or publish the skill files (SKILL.md, style.json, scripts) or this guide.
+    Fonts: Poppins and Playfair Display (SIL Open Font License). Cut-out model: MODNet (Apache-2.0). Not affiliated with Anthropic; Claude is a trademark of Anthropic.
+  </div>
+  <p class="muted" style="margin-top:8mm">Made by cuttit · cuttit.createpie.store</p>
+  <div class="foot"><span>Byline · The complete guide</span><span>12</span></div>
+</section>
+</body>
+</html>

@@ -37,20 +37,47 @@
 <main class="col">
   <header>
     <div class="eyebrow">Handoff for Claude in Chrome · cuttit</div>
-    <h1>Set up the cuttit store and the “Byline” product on Createpie Store</h1>
+    <h1>Finish the Byline product and polish the cuttit store</h1>
     <p>Written by Claude (cuttit build session). Claude in Chrome: read this whole page, then do the task below in the Createpie Store tab (createpie.store, seller dashboard).</p>
   </header>
 
   <section>
-    <h2>Task</h2>
+    <h2>Status</h2>
+    <p>Done already: store "cuttit" at cuttit.createpie.store (Studio template, #2F7BFF, tagline, about, 3 FAQs). A <b>Byline</b> product draft exists at ₹99 with title and description, but <b>no files yet</b>. Don't create a duplicate.</p>
+  </section>
+
+  <section>
+    <h2>Job 1: finish the Byline product</h2>
     <ol class="task">
-      <li><b>Store setup</b> (if the store isn't set up yet): store name, website address, template, brand colour, tagline, about and FAQs from the "Store" boxes below. <span>Pick the cleanest, most minimal template (e.g. "Studio"). Ask the user before choosing the website address.</span></li>
-      <li><b>Add a product</b> called Byline, using the "Product" boxes below. Copy the text exactly.</li>
-      <li>Price: <b>₹99</b>. <span>Ask the user to confirm before saving the price.</span></li>
-      <li>Files: stop and ask the user to upload each one (you can't pick files from their computer): <b>byline-skill.zip</b> as the product file (it must stay <b>downloadable</b>), <b>poster.jpg</b> as the cover, and <b>demo.mp4</b> as a preview video if the product supports one.</li>
-      <li><b>Payments and bank details:</b> don't touch them. If the dashboard asks for them, stop and tell the user.</li>
-      <li>Marketplace listing: ask the user whether to opt in.</li>
-      <li><b>Do not publish.</b> When finished, leave a comment on this handoff page with the store link, the product link and a list of what you created, then tell the user it's ready to review.</li>
+      <li>Open the existing Byline draft. Check its title and description against the "Product" boxes below; fix any difference.</li>
+      <li>Upload the files (the user attaches them to your chat or drags them in):
+        <span><b>Product files (downloadable):</b> byline-skill.zip (skill + guide inside) and Byline-Guide.pdf (enable "allow download" for the PDF).<br>
+        <b>Cover:</b> byline-cover-1080x1350.jpg (or byline-cover-1080.jpg if a square is required).<br>
+        <b>Intro / preview video:</b> byline-before-after.mp4.<br>
+        <b>Gallery / extra images</b> (if the product has a gallery): the 4 byline-gallery-*.jpg in order 1 → 4.</span></li>
+      <li>Price stays <b>₹99</b>. Save the product. Don't publish it; the user does that.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Job 2: make the store look premium</h2>
+    <ol class="task">
+      <li><b>Logo:</b> upload cuttit-logo-1024.png (or cuttit-icon-512.png if it asks for a square icon). Change the logo text from "HS" to <b>cuttit</b>.</li>
+      <li><b>Banner / hero image:</b> store-banner-2400x800.jpg. Banner title: <b>Reels that edit themselves.</b> Banner text: <b>Claude skills that turn a talking-head video into a premium reel.</b></li>
+      <li><b>Colours:</b> brand colour #2F7BFF. If the template has a dark mode or background colour option, choose <b>dark / #0A0A0B</b>.</li>
+      <li><b>Featured product:</b> show Byline first / featured on the homepage.</li>
+      <li><b>Remove leftovers</b> from the default template: sample text, placeholder products, "hadhi Store", empty sections.</li>
+      <li>Check the store on a phone-sized view: logo, banner and the Byline card should look clean.</li>
+      <li>Save the design. Report which options the template has that you couldn't change, so the build chat can make matching graphics.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Rules</h2>
+    <ol class="task">
+      <li>Ask the user before: changing the price, publishing anything, anything about payments, payouts or bank details.</li>
+      <li>Save often, so a dropped connection can't lose work.</li>
+      <li>When both jobs are done, leave a <b>comment on this page</b> with the store link, the product link, and a list of everything you created or changed (and anything you couldn't do).</li>
     </ol>
   </section>
 
@@ -62,10 +89,18 @@
   <section>
     <h2>Files (the user downloads these first)</h2>
     <table>
-      <tr><td>byline-skill.zip</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/downloads/byline-skill.zip">GitHub → Download</a> · the product file buyers get</td></tr>
-      <tr><td>poster.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/site/byline/poster.jpg">GitHub → Download</a> · cover image (9:16)</td></tr>
-      <tr><td>og.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/site/byline/og.jpg">GitHub → Download</a> · wide cover (1200×630) if a landscape image is needed</td></tr>
-      <tr><td>demo.mp4</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/site/byline/demo.mp4">GitHub → Download</a> · 10 s demo reel</td></tr>
+      <tr><td>byline-skill.zip</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/downloads/byline-skill.zip">GitHub → Download</a> · product file: skill + guide PDF (downloadable)</td></tr>
+      <tr><td>Byline-Guide.pdf</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/downloads/Byline-Guide.pdf">GitHub → Download</a> · product file: the 12-page guide (allow download)</td></tr>
+      <tr><td>byline-before-after.mp4</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/byline-before-after.mp4">GitHub → Download</a> · intro / preview video (5 MB)</td></tr>
+      <tr><td>byline-cover-1080x1350.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/byline-cover-1080x1350.jpg">GitHub → Download</a> · product cover (4:5)</td></tr>
+      <tr><td>byline-cover-1080.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/byline-cover-1080.jpg">GitHub → Download</a> · product cover (square)</td></tr>
+      <tr><td>byline-gallery-1-text-behind.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/byline-gallery-1-text-behind.jpg">GitHub → Download</a> · gallery 1</td></tr>
+      <tr><td>byline-gallery-2-3d-cards.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/byline-gallery-2-3d-cards.jpg">GitHub → Download</a> · gallery 2</td></tr>
+      <tr><td>byline-gallery-3-graphics.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/byline-gallery-3-graphics.jpg">GitHub → Download</a> · gallery 3</td></tr>
+      <tr><td>byline-gallery-4-before-after.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/byline-gallery-4-before-after.jpg">GitHub → Download</a> · gallery 4</td></tr>
+      <tr><td>cuttit-logo-1024.png</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/cuttit-logo-1024.png">GitHub → Download</a> · store logo (wordmark)</td></tr>
+      <tr><td>cuttit-icon-512.png</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/cuttit-icon-512.png">GitHub → Download</a> · store icon (square)</td></tr>
+      <tr><td>store-banner-2400x800.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/store-banner-2400x800.jpg">GitHub → Download</a> · store banner</td></tr>
     </table>
   </section>
 
