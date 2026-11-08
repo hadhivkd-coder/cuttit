@@ -18,6 +18,7 @@ sys.path.insert(0, HERE)
 import sfx as SFX
 
 W, H, FPS, SR = 1080, 1920, 30, 48000
+AF = 30  # animation timing base: durations written as 'frames at 30 fps', independent of output fps
 
 
 def run(cmd):
@@ -165,6 +166,32 @@ def pill(fonts, text, colors, glow, st):
     return img
 
 
+def ease_out_back(u, c1=1.45):
+    u = min(max(u, 0), 1); c3 = c1 + 1
+    return 1 + c3 * (u - 1) ** 3 + c1 * (u - 1) ** 2
+
+
+def ease_out_expo(u):
+    u = min(max(u, 0), 1); return 1 if u >= 1 else 1 - 2 ** (-10 * u)
+
+
+def ease_in_cubic(u):
+    u = min(max(u, 0), 1); return u ** 3
+
+
+def shimmer(layer, u, strength=0.6):
+    """A soft diagonal light band sweeping across an element (u: 0..1), clipped to its alpha."""
+    if not (0 < u < 1): return layer
+    w, h = layer.size
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    pos = (-0.4 + 1.8 * u) * (w + 0.5 * h)
+    band = np.exp(-(((xx + 0.5 * yy) - pos) / (0.16 * w + 1)) ** 2)
+    a = np.asarray(layer.split()[3], np.float32) / 255
+    al = (band * a * strength * 255).astype(np.uint8)
+    hl = Image.merge("RGBA", (*[Image.new("L", layer.size, 255)] * 3, Image.fromarray(al)))
+    return Image.alpha_composite(layer, hl)
+
+
 def spring(p, keys=(0.80, 0.98, 1.05, 1.0)):
     """Piecewise spring through keyframes over p in 0..1 (e.g. 4 frames: 80% -> overshoot -> 100%)."""
     p = min(max(p, 0), 1)
@@ -237,7 +264,9 @@ def scrim(w, h, strength=0.42):
 
 # ------------------------------------------------------------------ main
 def main(plan_path):
+    global FPS
     plan = json.load(open(plan_path))
+    FPS = plan.get("fps", 30)
     st = load_style(plan)
     wd = os.path.dirname(os.path.abspath(plan_path))
     src = os.path.join(wd, plan["source"])
@@ -253,7 +282,7 @@ def main(plan_path):
         vf.append(f"[0:v]trim={a}:{b},setpts=PTS-STARTPTS[v{i}]"); af.append(f"[0:a]atrim={a}:{b},asetpts=PTS-STARTPTS[a{i}]")
     n = len(tm.keep)
     grade = gr.get("ffmpeg", "eq=contrast=1.10:brightness=-0.015:saturation=1.10,unsharp=5:5:0.5")
-    fcv = ";".join(vf) + ";" + "".join(f"[v{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v];[v]setpts=PTS/{speed},scale={W}:{H}:flags=lanczos,minterpolate=fps={FPS}:mi_mode=blend[vs];[vs]{grade}[vo]"
+    fcv = ";".join(vf) + ";" + "".join(f"[v{i}]" for i in range(n)) + f"concat=n={n}:v=1:a=0[v];[v]setpts=PTS/{speed},minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,scale={W}:{H}:flags=lanczos[vs];[vs]{grade}[vo]"
     fca = ";".join(af) + ";" + "".join(f"[a{i}]" for i in range(n)) + f"concat=n={n}:v=0:a=1[a];[a]atempo={speed},loudnorm=I=-14:TP=-1.5:LRA=11,aresample={SR}[ao]"
     base = os.path.join(wd, "_base.mp4"); ungraded = os.path.join(wd, "_raw.mp4"); voice = os.path.join(wd, "_voice.wav")
     run(["ffmpeg", "-v", "error", "-y", "-i", src, "-filter_complex", fcv, "-map", "[vo]", "-an", "-c:v", "libx264", "-crf", "12", base])
@@ -432,14 +461,14 @@ def main(plan_path):
         if typ == "bars":
             hs = g.get("heights", [0.42, 0.68, 1.0]); n = len(hs); bw = L / (n * 1.45); gp = (L - n * bw) / max(n - 1, 1)
             for k, hf in enumerate(hs):
-                gq = spring((age - k * 0.08) * FPS / 7, (0.0, 0.8, 1.08, 0.98, 1.0))
+                gq = spring((age - k * 0.08) * AF / 7, (0.0, 0.8, 1.08, 0.98, 1.0))
                 if gq <= 0: continue
                 hh = L * hf * gq; x1 = o + k * (bw + gp)
                 col = blue if k == g.get("highlight", n - 1) else WHITE
                 d.rounded_rectangle((x1, o + L - hh, x1 + bw, o + L), int(bw * 0.22), fill=col + (255,))
         elif typ == "lock":
             ct = g.get("close_t", g["t0"] + 0.4)
-            lift = L * 0.16 * (1 - spring((t - ct) * FPS / 5, (0.0, 0.8, 1.08, 1.0))) if t >= ct else L * 0.16
+            lift = L * 0.16 * (1 - spring((t - ct) * AF / 5, (0.0, 0.8, 1.08, 1.0))) if t >= ct else L * 0.16
             sw = int(L * 0.085)
             d.arc((o + L * .28, o + L * .06 - lift, o + L * .72, o + L * .58 - lift), 180, 360, fill=WHITE + (255,), width=sw)
             d.line((o + L * .28 + sw / 2, o + L * .32 - lift, o + L * .28 + sw / 2, o + L * .50), fill=WHITE + (255,), width=sw)
@@ -466,14 +495,14 @@ def main(plan_path):
                 for c_ in range(4):
                     cx_ = o + L * (.17 + c_ * .22); cy_ = o + L * (.38 + r_ * .17); rr = L * .045
                     if (r_, c_) == tuple(mark) and t >= ckt:
-                        q = spring((t - ckt) * FPS / 6, (0.0, 0.8, 1.15, 1.0)); R = L * .085 * q
+                        q = spring((t - ckt) * AF / 6, (0.0, 0.8, 1.15, 1.0)); R = L * .085 * q
                         d.ellipse((cx_ - R, cy_ - R, cx_ + R, cy_ + R), fill=blue + (255,))
                         if q > 0.6:
                             ic = draw_icon("check", int(L * .11)); im.alpha_composite(ic, (int(cx_ - ic.width / 2), int(cy_ - ic.height / 2)))
                     else:
                         d.ellipse((cx_ - rr, cy_ - rr, cx_ + rr, cy_ + rr), fill=(190, 195, 205, 255))
         elif typ == "arrow":
-            q = ease_out(age * FPS / g.get("draw_frames", 10))
+            q = ease_out(age * AF / g.get("draw_frames", 10))
             pts = [(o + L * (0.05 + 0.9 * u), o + L * (0.8 - 0.75 * np.sin(np.pi * u * 0.6) * u)) for u in np.linspace(0, q, 30)]
             if len(pts) > 1:
                 d.line(pts, fill=WHITE + (255,), width=int(L * .045), joint="curve")
@@ -494,12 +523,12 @@ def main(plan_path):
         lay = Image.new("RGBA", (int(R * 4 * K), int(R * 4 * K)), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
         C = lay.width / 2
         if g["type"] == "ring":
-            q = ease_out(age * FPS / g.get("draw_frames", 9))
+            q = ease_out(age * AF / g.get("draw_frames", 9))
             if q > 0:
                 d.arc((C - R * K, C - R * K * 0.78, C + R * K, C + R * K * 0.78), -100, -100 + 360 * q,
                       fill=hex_rgb(g.get("color", "#2F7BFF")) + (255,), width=int(11 * K))
         if g["type"] in ("ring", "burst") and g.get("burst", g["type"] == "burst"):
-            bq = age * FPS / 9
+            bq = age * AF / 9
             if 0 <= bq <= 1:
                 for k in range(8):
                     a = 2 * np.pi * k / 8 + 0.3
@@ -507,6 +536,8 @@ def main(plan_path):
                     d.line((C + np.cos(a) * r1, C + np.sin(a) * r1 * 0.8, C + np.cos(a) * r2, C + np.sin(a) * r2 * 0.8),
                            fill=(255, 255, 255, int(255 * (1 - bq))), width=int(6 * K))
         lay = lay.resize((lay.width // K, lay.height // K), Image.LANCZOS)
+        fo = 1 - ease_in_cubic((age - (g["t1"] - g["t0"] - 0.22)) / 0.22)
+        if fo < 1: lay.putalpha(lay.split()[3].point(lambda v: int(v * max(fo, 0))))
         img.alpha_composite(lay, (int(cx - lay.width / 2), int(cyy - lay.height / 2)))
 
     def draw_graphic(img, g, t):
@@ -517,10 +548,35 @@ def main(plan_path):
         if g["type"] in ("bars", "lock", "heart", "calendar", "arrow"):
             lay = shape_layer(g, t, age)
             if lay is None: return
-            sc = spring(age * FPS / 8, (0.0, 0.7, 1.15, 0.95, 1.0)) if g["type"] != "arrow" else 1.0
-            if sc <= 0.01: return
+            dur = g["t1"] - g["t0"]
+            u_in = age / g.get("in_s", 0.5); u_out = (age - (dur - 0.25)) / 0.25
+            sc = ease_out_back(u_in) * (1 - 0.12 * ease_in_cubic(u_out)) if g["type"] != "arrow" else 1.0
+            alpha_k = min(1, ease_out(u_in * 2.2)) * (1 - ease_in_cubic(u_out))
+            if sc <= 0.01 or alpha_k <= 0.01: return
+            lay = shimmer(lay, (age - 0.35) / 0.55, 0.55)
+            float_y = 6 * np.sin(2 * np.pi * 0.45 * age)
+            gx = g.get("x", 0.5) * W; gy = cy + float_y
+            if g.get("panel", True):  # frosted glass panel behind the graphic
+                bb = lay.getbbox() or (0, 0, lay.width, lay.height)
+                pw_ = (bb[2] - bb[0]) * sc + 90; ph_ = (bb[3] - bb[1]) * sc + 90
+                pcx = gx + ((bb[0] + bb[2]) / 2 - lay.width / 2) * sc; pcy = gy + ((bb[1] + bb[3]) / 2 - lay.height / 2) * sc
+                box = (int(pcx - pw_ / 2), int(pcy - ph_ / 2), int(pcx + pw_ / 2), int(pcy + ph_ / 2))
+                if box[2] > box[0] + 4 and box[3] > box[1] + 4:
+                    reg = img.crop(box).convert("RGB").filter(ImageFilter.GaussianBlur(22))
+                    reg = Image.blend(reg, Image.new("RGB", reg.size, (255, 255, 255)), 0.12).convert("RGBA")
+                    m = Image.new("L", reg.size, 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, reg.width - 1, reg.height - 1), int(min(reg.size) * 0.18), fill=int(255 * alpha_k))
+                    reg.putalpha(m)
+                    shd = Image.new("RGBA", (reg.width + 80, reg.height + 80), (0, 0, 0, 0))
+                    sm_ = Image.new("L", shd.size, 0); ImageDraw.Draw(sm_).rounded_rectangle((40, 50, 40 + reg.width, 50 + reg.height), int(min(reg.size) * 0.18), fill=int(110 * alpha_k))
+                    shd.putalpha(sm_.filter(ImageFilter.GaussianBlur(18)))
+                    img.alpha_composite(shd, (box[0] - 40, box[1] - 40))
+                    img.alpha_composite(reg, (box[0], box[1]))
+                    rim = Image.new("RGBA", reg.size, (0, 0, 0, 0))
+                    ImageDraw.Draw(rim).rounded_rectangle((0, 0, reg.width - 1, reg.height - 1), int(min(reg.size) * 0.18), outline=(255, 255, 255, int(90 * alpha_k)), width=2)
+                    img.alpha_composite(rim, (box[0], box[1]))
             if sc != 1.0: lay = lay.resize((max(1, int(lay.width * sc)), max(1, int(lay.height * sc))), Image.BILINEAR)
-            img.alpha_composite(lay, (int(g.get("x", 0.5) * W - lay.width / 2), int(cy - lay.height / 2)))
+            if alpha_k < 1: lay.putalpha(lay.split()[3].point(lambda v: int(v * alpha_k)))
+            img.alpha_composite(lay, (int(gx - lay.width / 2), int(gy - lay.height / 2)))
             return
         if g["type"] == "counter":
             u = ease_out(age / g.get("count_s", 0.5))
@@ -530,17 +586,19 @@ def main(plan_path):
             num, nbo, nadv = word_img(fonts, txt, "sans", g.get("px", 110), color=col)
             lab, lbo, ladv = word_img(fonts, g.get("suffix", ""), "serif", int(g.get("px", 110) * 0.8), color=col)
             tot = nadv + 24 + ladv; x = W / 2 - tot / 2
-            ni, ndy = land(num, age * FPS / 6, rise=24, blur=14, s_from=1.12)
+            ni, ndy = land(num, age * AF / 6, rise=24, blur=14, s_from=1.12)
             img.alpha_composite(ni, (int(x + nadv / 2 - ni.width / 2), int(cy - nbo + ndy)))
             img.alpha_composite(lab, (int(x + nadv + 24 - (lab.width - ladv) / 2), int(cy - lbo)))
             if "strike_t" in g:
-                q = ease_out((t - g["strike_t"]) * FPS / 7)
+                q = ease_out((t - g["strike_t"]) * AF / 7)
                 strike(img, x - 20, cy - g.get("px", 110) * 0.28, x + tot + 20, cy - g.get("px", 110) * 0.42, q)
         elif g["type"] == "grid" and g.get("style", "clean") == "clean":
             # clean white 3x3 grid, whole graphic springs in from the centre; red diagonal line over the squares
             size = g.get("size", 330); gap_ = size * 0.05; tile = (size - 2 * gap_) / 3
-            sc = spring(age * FPS / 8, (0.0, 0.7, 1.15, 0.95, 1.0))
+            dur = g["t1"] - g["t0"]; u_out = (age - (dur - 0.25)) / 0.25
+            sc = ease_out_back(age / 0.5) * (1 - 0.12 * ease_in_cubic(u_out))
             if sc <= 0.01: return
+            cy = cy + 6 * np.sin(2 * np.pi * 0.45 * age)
             layer = Image.new("RGBA", (int(size + 40), int(size + 40)), (0, 0, 0, 0)); d = ImageDraw.Draw(layer)
             for r_ in range(3):
                 for c_ in range(3):
@@ -548,12 +606,14 @@ def main(plan_path):
                     d.rounded_rectangle((x1, y1 + 3, x1 + tile, y1 + tile + 3), int(tile * 0.12), fill=(0, 0, 0, 70))
                     d.rounded_rectangle((x1, y1, x1 + tile, y1 + tile), int(tile * 0.12), fill=(255, 255, 255, 240))
             if "strike_t" in g:
-                q = ease_out((t - g["strike_t"]) * FPS / 7)
+                q = ease_out((t - g["strike_t"]) * AF / 7)
                 if q > 0:
                     ax, ay = 20 + tile * 0.25, 20 + tile * 0.25; bx_, by_ = 20 + size - tile * 0.25, 20 + size - tile * 0.25
                     strike(layer, ax, ay, ax + (bx_ - ax), ay + (by_ - ay), q, g.get("line_px", 16))
+            layer = shimmer(layer, (age - 0.3) / 0.55, 0.5)
             if sc != 1.0:
                 layer = layer.resize((max(1, int(layer.width * sc)), max(1, int(layer.height * sc))), Image.BILINEAR)
+            if u_out > 0: layer.putalpha(layer.split()[3].point(lambda v: int(v * (1 - ease_in_cubic(u_out)))))
             img.alpha_composite(layer, (int(W / 2 - layer.width / 2), int(cy - layer.height / 2)))
         elif g["type"] == "grid":
             size = g.get("size", 330); x0 = W / 2 - size / 2; y0 = cy - size / 2
@@ -563,18 +623,18 @@ def main(plan_path):
             for k_, (r_, c_, tim) in enumerate(g["tiles"]):
                 tt = age - k_ * g.get("stagger", 0.05)
                 if tt < 0: continue
-                ti = scale_fade(tim, tt * FPS / 6, 0.2, 1.08)
+                ti = scale_fade(tim, tt * AF / 6, 0.2, 1.08)
                 cx_ = x0 + c_ * (g["tile"] + g["gap"]) + g["tile"] / 2; cy_ = y0 + r_ * (g["tile"] + g["gap"]) + g["tile"] / 2
                 img.alpha_composite(ti, (int(cx_ - ti.width / 2), int(cy_ - ti.height / 2)))
             if "strike_t" in g:
-                q1 = ease_out((t - g["strike_t"]) * FPS / 6); q2 = ease_out((t - g["strike_t"]) * FPS / 6 - 0.6)
+                q1 = ease_out((t - g["strike_t"]) * AF / 6); q2 = ease_out((t - g["strike_t"]) * AF / 6 - 0.6)
                 strike(img, x0 - 10, y0 - 10, x0 + size + 10, y0 + size + 10, q1, 16)
                 strike(img, x0 + size + 10, y0 - 10, x0 - 10, y0 + size + 10, q2, 16)
         elif g["type"] == "button":
             b = g["img"]; ct = g.get("click_t", g["t0"] + 0.6)
             sc = 1.0
             if 0 <= t - ct < 0.25: sc = 0.93 + 0.07 * ((t - ct) / 0.25)
-            bi = scale_fade(b, age * FPS / 7)
+            bi = scale_fade(b, age * AF / 7)
             if sc != 1.0: bi = bi.resize((int(bi.width * sc), int(bi.height * sc)), Image.BILINEAR)
             img.alpha_composite(bi, (int(W / 2 - bi.width / 2), int(cy - bi.height / 2)))
             # cursor glides in (eased) and clicks
@@ -619,9 +679,11 @@ def main(plan_path):
         crop = f"crop={w}:{h}:{x}:{y}," if w else ""
         path = os.path.join(wd, f"_cut{k_}.mp4")
         run(["ffmpeg", "-v", "error", "-y", "-ss", str(start), "-t", str(span), "-i", clip_src, "-an", "-vf",
-             f"{crop}scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},setpts=PTS/{slow * speed},minterpolate=fps={FPS}:mi_mode=blend,{grade}",
+             f"{crop}scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},scale=608:1080,setpts=PTS/{slow * speed},minterpolate=fps={FPS}:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1,scale={W}:{H}:flags=lanczos,{grade}",
              "-c:v", "libx264", "-crf", "14", path])
-        cutaways.append(dict(t0=t0o, t1=t1o, path=path, dec=None, zoom=c.get("zoom", [1.0, 1.08])))
+        cutaways.append(dict(t0=t0o, t1=t1o, path=path, dec=None, zoom=c.get("zoom", [1.0, 1.08]),
+                             mode=c.get("mode", "full"), enter=c.get("enter", "right"), card_w=c.get("card_w", 0.66),
+                             card_y=c.get("card_y", 0.44)))
 
     trans_pts = plan.get("transitions_extra", [])
     trans_pts = [T(x) for x in trans_pts] + [c["t0"] for c in cutaways] + [c["t1"] for c in cutaways]
@@ -629,8 +691,26 @@ def main(plan_path):
     trans_pts = sorted(set(round(x, 3) for x in trans_pts))
     rb_frames, rb_peak = cam.get("radial_frames", 6), cam.get("radial_strength", 0.14)
 
+    ttype = plan.get("transition", cam.get("transition_type", "flash"))
+    yy_, xx_ = np.mgrid[0:H, 0:W].astype(np.float32)
+    flash_mask = (1 - 0.5 * (((xx_ - W / 2) / (W / 2)) ** 2 + ((yy_ - H * 0.45) / (H / 2)) ** 2)).clip(0.35, 1)[..., None]
+    del yy_, xx_
+
+    def flash_amount(t):
+        a = 0.0
+        for p_ in trans_pts:
+            if p_ - 0.14 <= t < p_: a = max(a, ((t - (p_ - 0.14)) / 0.14) ** 2)
+            elif p_ <= t < p_ + 0.6: a = max(a, np.exp(-(t - p_) / 0.15))
+        return a * cam.get("flash_peak", 0.85)
+
+    def apply_flash(arr, a):
+        small = cv2.resize(arr, (W // 6, H // 6), interpolation=cv2.INTER_AREA)
+        bloom = cv2.resize(cv2.GaussianBlur(small, (0, 0), 6), (W, H), interpolation=cv2.INTER_LINEAR)
+        out = arr * (1 - 0.4 * a) + bloom * 0.4 * a * 1.3
+        return out + a * flash_mask * (255 - out) * 0.92
+
     def radial_strength(t):
-        return max([rb_peak * max(0, 1 - abs(t - p) * FPS / rb_frames) for p in trans_pts] + [0])
+        return max([rb_peak * max(0, 1 - abs(t - p) * AF / rb_frames) for p in trans_pts] + [0])
 
     def radial_blur(arr, s, cx=W / 2, cy=H * 0.45, n=9):
         acc = np.zeros_like(arr, np.float32)
@@ -639,6 +719,50 @@ def main(plan_path):
             M = np.float32([[z, 0, cx * (1 - z)], [0, z, cy * (1 - z)]])
             acc += cv2.warpAffine(arr, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
         return acc / n
+
+    card_cache = {}
+
+    def card_composite(bg, clip, cw, t):
+        """B-roll as a floating 3D card over a blurred, darkened speaker."""
+        cwid = int(W * cw["card_w"]); chei = int(cwid * 16 / 9)
+        key = (cwid, chei)
+        if key not in card_cache:
+            m = Image.new("L", (cwid, chei), 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, cwid - 1, chei - 1), int(cwid * 0.07), fill=255)
+            rim = Image.new("L", (cwid, chei), 0); ImageDraw.Draw(rim).rounded_rectangle((1, 1, cwid - 2, chei - 2), int(cwid * 0.07), outline=255, width=4)
+            card_cache[key] = (np.asarray(m, np.float32) / 255, np.asarray(rim, np.float32)[..., None] / 255)
+        mask, rim = card_cache[key]
+        # background: blurred + darkened speaker
+        sm = cv2.resize(bg, (W // 8, H // 8), interpolation=cv2.INTER_AREA)
+        bgb = cv2.resize(cv2.GaussianBlur(sm, (0, 0), 3), (W, H), interpolation=cv2.INTER_LINEAR) * 0.42
+        # card texture (centre crop of the clip)
+        tex = cv2.resize(clip, (cwid, chei), interpolation=cv2.INTER_AREA)
+        tex = tex * (1 - rim * 0.25) + 255 * rim * 0.25
+        # motion: expo ease in, gentle float, eased exit
+        dur = cw["t1"] - cw["t0"]; age = t - cw["t0"]
+        e = ease_out_expo(age / 0.6); x_out = ease_in_cubic((age - (dur - 0.3)) / 0.3)
+        ry = (1 - e) * 38 + 7 * np.sin(2 * np.pi * 0.33 * t); rx = 4 * np.sin(2 * np.pi * 0.27 * t + 1.0)
+        sc = (0.72 + 0.28 * e) * (1 - 0.08 * x_out)
+        dx = (1 - e) * W * 0.85 if cw["enter"] == "right" else ((1 - e) * -W * 0.85 if cw["enter"] == "left" else 0)
+        dy = (1 - e) * H * 0.7 if cw["enter"] == "bottom" else 0
+        if cw["enter"] == "bottom": rx += (1 - e) * 30; ry *= 0.3
+        dy += 10 * np.sin(2 * np.pi * 0.4 * t)
+        cx, cy = W / 2 + dx, H * cw["card_y"] + dy
+        a_y, a_x = np.radians(ry), np.radians(rx)
+        Ry = np.array([[np.cos(a_y), 0, np.sin(a_y)], [0, 1, 0], [-np.sin(a_y), 0, np.cos(a_y)]])
+        Rx = np.array([[1, 0, 0], [0, np.cos(a_x), -np.sin(a_x)], [0, np.sin(a_x), np.cos(a_x)]])
+        f = 2200.0
+        corners = np.array([[-cwid / 2, -chei / 2, 0], [cwid / 2, -chei / 2, 0], [cwid / 2, chei / 2, 0], [-cwid / 2, chei / 2, 0]]) * sc
+        P = corners @ (Rx @ Ry).T
+        dst = np.float32([[cx + f * X / (f + Z), cy + f * Y / (f + Z)] for X, Y, Z in P])
+        src_ = np.float32([[0, 0], [cwid, 0], [cwid, chei], [0, chei]])
+        Mp = cv2.getPerspectiveTransform(src_, dst)
+        warped = cv2.warpPerspective(tex, Mp, (W, H), flags=cv2.INTER_LINEAR, borderValue=0)
+        alpha = cv2.warpPerspective(mask, Mp, (W, H), flags=cv2.INTER_LINEAR, borderValue=0)[..., None]
+        alpha *= (1 - x_out)
+        sh = cv2.resize(cv2.GaussianBlur(cv2.resize(alpha, (W // 8, H // 8)), (0, 0), 4), (W, H))[..., None]
+        sh = np.roll(sh, 40, axis=0) * 0.6
+        bgb *= (1 - sh)
+        return bgb * (1 - alpha) + warped * alpha
 
     for i in range(nfr):
         raw = dec.stdout.read(W * H * 3)
@@ -654,9 +778,9 @@ def main(plan_path):
         else:
             cur = [s_ for s_ in scales if s_[0] <= t + 1e-6]; s_now = cur[-1][1] if cur else 1.0
             since = t - (cur[-1][0] if cur else 0)
-            bump = sum(0.045 * (min(1, (t - b) * FPS / 3) if t - b < 3 / FPS else np.exp(-((t - b) * FPS - 3) / 6)) for b in bumps if 0 <= t - b < 1.0)
+            bump = sum(0.045 * (min(1, (t - b) * AF / 3) if t - b < 3 / AF else np.exp(-((t - b) * AF - 3) / 6)) for b in bumps if 0 <= t - b < 1.0)
             s_eff = s_now * (1 + push * min(since, 3.0)) * (1 + bump) * (st["bw_punch"]["zoom"] if in_bw else 1.0)
-            sh = [(rng.normal(0, 9) * np.exp(-(t - b) * FPS / 5), rng.normal(0, 9) * np.exp(-(t - b) * FPS / 5)) for b in shakes if 0 <= t - b < 0.35]
+            sh = [(rng.normal(0, 9) * np.exp(-(t - b) * AF / 5), rng.normal(0, 9) * np.exp(-(t - b) * AF / 5)) for b in shakes if 0 <= t - b < 0.35]
             dx, dy = (sum(s_[0] for s_ in sh), sum(s_[1] for s_ in sh)) if sh else (0, 0)
 
         def zoom(img, s):
@@ -674,10 +798,12 @@ def main(plan_path):
                 zz = z0 + (z1 - z0) * (0.5 - 0.5 * np.cos(np.pi * u))
                 M = np.float32([[zz, 0, W / 2 * (1 - zz)], [0, zz, H / 2 * (1 - zz)]])
                 out = cv2.warpAffine(cf, M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT).astype(np.float32)
+                if cw["mode"] == "card":
+                    out = card_composite(zoom(fr, s_eff).astype(np.float32), out, cw, t)
             else:
                 out = zoom(fr, s_eff).astype(np.float32)
         else:
-            k = int(round(since * FPS))
+            k = int(round(since * AF))
             if not smooth and len(cur) > 1 and k < tf:
                 strength = 1 - k / tf
                 out = np.mean([zoom(fr, s_eff * (1 + 0.07 * strength * j / 4)) for j in range(5)], axis=0, dtype=np.float32)
@@ -713,7 +839,7 @@ def main(plan_path):
                 ci = card["img"].resize((max(1, int(card["img"].width * sc)), max(1, int(card["img"].height * sc))), Image.BILINEAR)
                 img.alpha_composite(ci, (int(W / 2 - ci.width / 2), int(H / 2 - ci.height / 2)))
             elif in_cta:
-                p = (t - cta["t0"]) * FPS / 4
+                p = (t - cta["t0"]) * AF / 4
                 bs = spring(p)
                 bi = cta["bigp"].resize((int(cta["bigp"].width * bs), int(cta["bigp"].height * bs)), Image.BILINEAR)
                 cyb = H * 0.50
@@ -721,7 +847,7 @@ def main(plan_path):
                 cur_ = [x for x in cta["cyc"] if x[0] <= t]
                 if cur_:
                     ct_, ci_, cbo_ = cur_[-1]
-                    ss = spring((t - ct_) * FPS / 4)
+                    ss = spring((t - ct_) * AF / 4)
                     si = ci_.resize((int(ci_.width * ss), int(ci_.height * ss)), Image.BILINEAR)
                     img.alpha_composite(si, (int(W / 2 - si.width / 2), int(cyb + st["cta"]["small_px"] * 1.5 - cbo_ * ss)))
             else:
@@ -740,7 +866,7 @@ def main(plan_path):
                             line.alpha_composite(im_, (int(cxw - im_.width / 2), int(base_ - q_["bo"] * g_ + (g_ - 1) * cs["sans_px"] * 0.3)))
                         else:
                             line.alpha_composite(im_, (int(q_["x"] - (im_.width - q_["adv"]) / 2), int(base_ - q_["bo"])))
-                    ps = spring((t - c["t0"]) * FPS / cs.get("pop_frames", 4))
+                    ps = spring((t - c["t0"]) * AF / cs.get("pop_frames", 4))
                     if ps != 1.0:
                         line = line.resize((int(W * ps), int(hgt * ps)), Image.BILINEAR)
                     img.alpha_composite(line, (int(W / 2 - line.width / 2), int(y - base_ * ps)))
@@ -748,16 +874,19 @@ def main(plan_path):
                     shown = [it for it in ch["items"] if it["t"] <= t]
                     hs = [it["img"].height for it in shown]
                     yy = y - 30 - (sum(hs) + st["chips"]["stack_gap_px"] * (len(shown) - 1)) / 2
+                    fade_c = 1 - ease_in_cubic((t - (ch["t1"] - 0.22)) / 0.22)
                     for it, h0 in zip(shown, hs):
-                        sc = spring((t - it["t"]) * FPS / st["chips"].get("pop_frames", 8), (0.0, 0.7, 1.22, 0.93, 1.0))
-                        a_ = it["img"].resize((max(1, int(it["img"].width * sc)), max(1, int(it["img"].height * sc))), Image.BILINEAR)
+                        sc = spring((t - it["t"]) * AF / st["chips"].get("pop_frames", 10), (0.0, 0.7, 1.18, 0.95, 1.0))
+                        base_img = shimmer(it["img"], (t - it["t"] - 0.25) / 0.5, 0.6)
+                        a_ = base_img.resize((max(1, int(it["img"].width * sc)), max(1, int(it["img"].height * sc))), Image.BILINEAR)
+                        if fade_c < 1: a_.putalpha(a_.split()[3].point(lambda v: int(v * max(fade_c, 0))))
                         img.alpha_composite(a_, (int(W / 2 - a_.width / 2), int(yy + h0 / 2 - a_.height / 2)))
                         yy += h0 + st["chips"]["stack_gap_px"]
         else:
             card = next((c for c in cards if c["t0"] <= t < c["t1"]), None)
             if card:
                 img = Image.new("RGBA", (W, H), card["bgc"] + (255,))
-                p = (t - card["t0"]) * FPS / st["word_cards"].get("enter", {}).get("frames", 5)
+                p = (t - card["t0"]) * AF / st["word_cards"].get("enter", {}).get("frames", 5)
                 ci, cdy = land(card["img"], p, rise=30, blur=26, s_from=1.18)
                 cz = 1 + 0.03 * (t - card["t0"])  # slow push on the card
                 ci = ci.resize((int(ci.width * cz), int(ci.height * cz)), Image.BILINEAR)
@@ -776,12 +905,12 @@ def main(plan_path):
                         gi = prev["ghost"]; img.alpha_composite(gi, (int(W / 2 - gi.width / 2), int(top - 12 - prev["gbo"])))
                     for wd_, wt in zip(c["w"], c["wt"]):
                         if t < wt: continue
-                        p = (t - wt) * FPS / 6
+                        p = (t - wt) * AF / 6
                         im, ddy = land(wd_["img"], p)
                         cx = wd_["x"] + wd_["adv"] / 2
                         sc = im.width / wd_["img"].width
                         if wd_["power"] and wd_["glow"] is not None:
-                            pulse = max(0, 1 - (t - wt) * FPS / 14)
+                            pulse = max(0, 1 - (t - wt) * AF / 14)
                             if p >= 1 and pulse > 0:
                                 gl = wd_["glow"].copy(); gl.putalpha(gl.split()[3].point(lambda v: int(v * pulse)))
                                 img.alpha_composite(gl, (int(cx - gl.width / 2), int(y - wd_["bo"])))
@@ -793,33 +922,38 @@ def main(plan_path):
                                 uy = int(y + cs.get("serif_px", int(cs["sans_px"] * 1.2)) * 0.12)
                                 ImageDraw.Draw(img).rounded_rectangle((ux, uy, ux + max(uw, 2), uy + 7), 3, fill=blue + (235,))
                 if stat:
-                    p = (t - stat["t0"]) * FPS / 7
+                    p = (t - stat["t0"]) * AF / 7
                     si = scale_fade(stat["img"], p, 0.3, 1.1)
                     sy = y + stat.get("dy", 40)
                     img.alpha_composite(si, (int(W / 2 - si.width / 2), int(sy - si.height / 2)))
                     if t - stat["t0"] > 0.2:
-                        li, ldy = land(stat["label_img"], (t - stat["t0"] - 0.2) * FPS / 6)
+                        li, ldy = land(stat["label_img"], (t - stat["t0"] - 0.2) * AF / 6)
                         img.alpha_composite(li, (int(W / 2 - li.width / 2), int(sy + stat.get("px", 360) * 0.42 - stat["label_img"].height * 0.35 + ldy)))
                 if ch:
                     shown = [it for it in ch["items"] if it["t"] <= t]
                     hs = [it["img"].height - 140 for it in shown]
                     yy = y - 40 - (sum(hs) + st["chips"]["stack_gap_px"] * (len(shown) - 1)) / 2
                     for it, h0 in zip(shown, hs):
-                        a = scale_fade(it["img"], (t - it["t"]) * FPS / st["chips"]["enter"]["frames"])
+                        a = scale_fade(it["img"], (t - it["t"]) * AF / st["chips"]["enter"]["frames"])
                         img.alpha_composite(a, (int(W / 2 - a.width / 2), int(yy + h0 / 2 - a.height / 2)))
                         yy += h0 + st["chips"]["stack_gap_px"]
                 if cta and t >= cta["t0"]:
-                    p = (t - cta["t0"]) * FPS / 6
+                    p = (t - cta["t0"]) * AF / 6
                     big, bdy = land(cta["big"], p)
                     img.alpha_composite(big, (int(W / 2 - big.width / 2), int(H * 0.52 - cta["kbo"] + bdy)))
                     sm, sdy = land(cta["small"], p)
                     img.alpha_composite(sm, (int(W / 2 - sm.width / 2), int(H * 0.52 - st["cta"]["big_px"] * 0.95 - cta["sbo"] + sdy)))
         for gfx in graphics:
             draw_graphic(img, gfx, t)
-        rs = radial_strength(t)
         frame_out = np.asarray(img.convert("RGB"))
-        if rs > 0.005:
-            frame_out = np.clip(radial_blur(frame_out.astype(np.float32), rs), 0, 255).astype(np.uint8)
+        if ttype == "radial":
+            rs = radial_strength(t)
+            if rs > 0.005:
+                frame_out = np.clip(radial_blur(frame_out.astype(np.float32), rs), 0, 255).astype(np.uint8)
+        else:
+            fa = flash_amount(t)
+            if fa > 0.01:
+                frame_out = np.clip(apply_flash(frame_out.astype(np.float32), fa), 0, 255).astype(np.uint8)
         enc.stdin.write(frame_out.tobytes())
     enc.stdin.close(); enc.wait(); dec.wait()
     for c in cutaways:
@@ -852,7 +986,8 @@ def main(plan_path):
         events += [(t, "whoosh") for t, _ in scales[1:] if all(abs(t - ct) > 0.15 for ct in card_t)]
         if st["audio"].get("risers", False): events += [(c["t0"] - plan.get("riser_s", 0.5) + 2 / FPS, "riser") for c in cards if not any(abs(c["t0"] - d["t1"]) < 0.05 for d in cards)]
         if smooth:
-            events = [e for e in events if e[1] != "whoosh"] + [(p_ - 0.12, "whoosh") for p_ in trans_pts if all(abs(p_ - c["t0"]) > 0.05 for c in cards)]
+            tsound = "flash" if (ttype == "flash" and "flash" in bank) else "whoosh"
+            events = [e for e in events if e[1] != "whoosh"] + [(p_ - 0.14, tsound) for p_ in trans_pts if all(abs(p_ - c["t0"]) > 0.05 for c in cards)]
         if "highlight" in bank and not pop:
             events += [(c["wt"][i_] + 4 / FPS, "highlight") for c in caps for i_ in c.get("power", [])]
     for ts, nm in events:

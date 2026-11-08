@@ -98,7 +98,8 @@ the style's defaults.
 
 **Camera**
 - Default: slow, smooth, eased zooms (100% to ~107%) that change direction every 2-3 s. Never snap.
-- Transitions between scenes (cards, B&W, b-roll) use a 6-frame radial blur and a whoosh.
+- Transitions between scenes (cards, B&W, b-roll) use a soft white light flash/bloom with a dreamy whoosh. No glitches.
+- B-roll is motion design, not a hard swap: mostly floating 3D cards over the blurred speaker, sometimes full-screen for variety.
 - Nothing stays unchanged longer than 3 s (a punch-in, card, chip or b-roll counts as a change).
 
 **Black-and-white punch**
@@ -147,6 +148,15 @@ If the user wants something the scripts don't do (b-roll, music, new elements fr
 - `camera_mode: "smooth"` (default): only slow, eased zooms between `scales` keyframes. No snap punch-ins.
   `"punch"` brings back fast punch-ins with bumps and shake for high-energy edits.
 - Radial-blur transitions are added automatically at every card, B&W and cutaway boundary (`camera.radial_strength`).
+- `fps: 60` (recommended): footage is motion-interpolated (ffmpeg `minterpolate` mci) to real in-between frames, so slow motion,
+  zooms and every animation are silky. Animation durations are defined in time, so they look the same at any fps.
+- `transition: "flash"` (default): a soft white light bloom that rises over ~0.14 s and fades over ~0.4 s at every scene change
+  (b-roll, cards, B&W), with a dreamy whoosh (`flash` SFX role). `"radial"` gives the radial-blur zoom instead.
+- Cutaway `mode: "card"`: the b-roll becomes a rounded 3D card (`card_w`, `card_y`) that flies in (`enter`: right / left / bottom /
+  scale) with an expo ease and perspective tilt, floats gently, and eases out, over a blurred, darkened copy of the speaker with a
+  soft shadow. Graphics placed at ~0.71 height overlap the card's lower edge for depth. `mode: "full"` keeps full-screen b-roll.
+- Graphics: eased-back entrance (~0.5 s), gentle float, soft exit, a light shimmer sweep, and a frosted glass panel behind
+  (`panel: false` to turn it off). Chips get the shimmer and fade out at the end of the list.
 - `cutaways`: slow-motion b-roll, from the user's b-roll file (`file`) or a crop of the source (`crop`), with `slowmo` and a slow zoom.
 - `graphics` (motion graphics in the style DNA; every shape springs in from the centre with a bounce, drawn at 2x for smooth edges):
   - `bars`: bar chart growing bar by bar, `highlight` bar in blue ("top tier", "growth", "results").
