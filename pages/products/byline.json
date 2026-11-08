@@ -1,0 +1,75 @@
+{
+  "slug": "byline",
+  "name": "Byline",
+  "eyebrow": "Skill 01 · Claude skill",
+  "price": 99, "currency": "INR", "price_label": "₹99",
+  "buy_url": "https://example.com/REPLACE-with-your-CreatePie-link-for-Byline",
+  "buy_note": "Instant access · Works with Claude Code on your computer",
+  "seo_title": "Byline: premium reel edits with Claude · cuttit",
+  "seo_description": "Byline is a Claude skill that edits your talking-head video into a premium reel: text behind you, orbit lines, 3D b-roll cards, motion graphics and smooth 60 fps motion. ₹99.",
+  "og_title": "Byline: premium reel edits with Claude",
+  "og_description": "Text behind you, orbit lines, 3D b-roll cards, motion graphics. A new edit for every video. ₹99.",
+  "og_image": "og.jpg",
+  "demo": "demo.mp4", "poster": "poster.jpg",
+  "lead": "Turn any talking-head video into a <b>premium editorial reel</b>: text behind you, glowing lines that orbit you, b-roll as floating 3D cards, motion graphics and silky 60 fps motion. <b>A new edit for every video.</b>",
+  "theme": {
+    "bg": "#0a0a0b", "ink": "#f4f4f6", "muted": "#9a9aa3", "line": "#1f1f24", "panel": "#121216",
+    "accent": "#2f7bff", "btn_bg": "#f4f4f6", "btn_ink": "#0a0a0b", "scheme": "dark",
+    "phone_bg": "linear-gradient(160deg,#2a2a31,#0f0f12)", "glow": "rgba(47,123,255,.22)",
+    "sans": "Poppins, system-ui, -apple-system, sans-serif", "display": "\"Playfair Display\", Georgia, serif", "display_style": "italic",
+    "fonts_url": "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600&display=swap",
+    "og_display_font": "PlayfairDisplay-Italic.ttf", "og_sans_font": "Poppins-Bold.ttf"
+  },
+  "features_title": "Edits that make people ask <em>“how did he do that?”</em>",
+  "features_sub": "Everything in the demo was made by Claude with Byline, from one 10-second clip and four stock b-roll shots.",
+  "features": [
+    {"k": "DEPTH", "h": "Text behind you", "p": "Giant words rise letter by letter behind your head and shoulders. You stay in front."},
+    {"k": "LINES", "h": "Orbit & swoosh lines", "p": "Glowing strokes draw themselves around you, behind your neck and across the frame, then retract."},
+    {"k": "B-ROLL", "h": "3D floating cards", "p": "B-roll flies in as tilted 3D cards over a blurred you, or opens with an iris reveal."},
+    {"k": "TYPE", "h": "Pop-in captions", "p": "1-2 word captions that pop and hard-cut, with big serif-italic power words."},
+    {"k": "GRAPHICS", "h": "Motion graphics on glass", "p": "Bar charts, padlocks, counters, calendars, icon chips: eased, floating, with a light shimmer."},
+    {"k": "FEEL", "h": "Flash transitions & sound", "p": "Soft white light flashes, smooth camera moves, and sound effects synced to every moment."}
+  ],
+  "beats_title": "Claude reads your script and <em>designs</em> the edit.",
+  "beats_sub": "Byline finds the beats in what you say and picks the effect that fits each one, so no two videos look the same.",
+  "beats": [
+    ["A hook", "A giant word behind you while the camera dollies in"],
+    ["A secret", "A padlock that clicks shut, or an iris reveal"],
+    ["A myth / mistake", "Black-and-white with a red strike through a graphic"],
+    ["A number", "A giant serif number peeking out from behind your shoulder"],
+    ["A list or apps", "Icon chips that spring in one by one"],
+    ["Growth or results", "A bar chart building itself"],
+    ["Proof", "Your b-roll as a floating 3D card"],
+    ["Your call to action", "A massive serif keyword with the instructions cycling underneath"]
+  ],
+  "steps_title": "Four steps. No timeline.",
+  "steps": [
+    ["Add Byline to Claude", "Put the skill folder in Claude Code. One-time setup."],
+    ["Send your video", "Choose “customise” or “leave it to me”."],
+    ["Approve the plan", "Claude shows every effect and why, then renders a quick preview."],
+    ["Post it", "Final 60 fps reel, 1080×1920, ready to upload."]
+  ],
+  "get_title": "The skill + the engine",
+  "includes": [
+    "<b>SKILL.md</b>: the full Byline style and creative engine",
+    "<b>Tested renderer</b>: Python scripts that build the reel",
+    "<b>Style file</b>: exact fonts, colours, timings and sound levels",
+    "<b>Example edit plan</b> from the demo",
+    "<b>Setup guide</b>, step by step"
+  ],
+  "need": [
+    "<b>A computer</b> with Claude Code (desktop app or VS Code). It doesn't render on a phone.",
+    "<b>Free tools:</b> Python and ffmpeg. Claude installs the rest.",
+    "<b>Render time:</b> about 2 minutes per second of video at 60 fps.",
+    "<b>Your own talking-head video</b>, ideally 1080p. B-roll is optional."
+  ],
+  "faq": [
+    ["Do I need editing experience?", "No. You talk to Claude in plain language. Byline tells Claude exactly how to edit."],
+    ["Can I use my own fonts, colours, music and sound effects?", "Yes. Choose “customise” and Byline asks for them. Otherwise it uses its own defaults and generates its own sound effects and music bed."],
+    ["Will every video look the same?", "No. Byline reads your script and picks different effects for different beats, with one hero moment per video."],
+    ["Can I use it for client work?", "Yes. The reels you make are yours to post or sell. Please don't resell or share the skill files themselves."],
+    ["Can I edit on my phone?", "Not yet. Byline renders on a computer. Want it done for you? Our WhatsApp editing service is coming soon."]
+  ],
+  "final_title": "Make your next reel a <em>Byline</em>.",
+  "footer_note": "Demo b-roll from Pexels."
+}

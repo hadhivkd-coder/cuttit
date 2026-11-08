@@ -1,0 +1,6 @@
+{
+  "brand": "cuttit",
+  "base_url": "",
+  "meta_pixel_id": "",
+  "_notes": "base_url: your live domain, e.g. https://cuttit.vercel.app (no trailing slash). meta_pixel_id: from Meta Events Manager. Then run: python pages/build.py"
+}

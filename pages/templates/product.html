@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ p.seo_title }}</title>
+<meta name="description" content="{{ p.seo_description }}">
+<meta name="theme-color" content="{{ p.theme.bg }}">
+{% if site.base_url %}<link rel="canonical" href="{{ site.base_url }}/{{ p.slug }}">{% endif %}
+<!-- Open Graph (WhatsApp, Instagram, Facebook, LinkedIn previews) -->
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="{{ site.brand }}">
+<meta property="og:title" content="{{ p.og_title }}">
+<meta property="og:description" content="{{ p.og_description }}">
+<meta property="og:image" content="{{ site.base_url }}/{{ p.slug }}/{{ p.og_image }}">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+{% if site.base_url %}<meta property="og:url" content="{{ site.base_url }}/{{ p.slug }}">{% endif %}
+<meta property="og:video" content="{{ site.base_url }}/{{ p.slug }}/{{ p.demo }}">
+<meta property="product:price:amount" content="{{ p.price }}">
+<meta property="product:price:currency" content="{{ p.currency }}">
+<!-- X / Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ p.og_title }}">
+<meta name="twitter:description" content="{{ p.og_description }}">
+<meta name="twitter:image" content="{{ site.base_url }}/{{ p.slug }}/{{ p.og_image }}">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230a0a0b'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='%232f7bff' font-family='Georgia' font-style='italic'%3Ec%3C/text%3E%3C/svg%3E">
+<!-- Structured data: Google can show the product with its price -->
+<script type="application/ld+json">
+{{ jsonld | safe }}
+</script>
+{% if site.meta_pixel_id %}
+<!-- Meta Pixel -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '{{ site.meta_pixel_id }}');
+fbq('track', 'PageView');
+fbq('track', 'ViewContent', {content_name: '{{ p.name }}', content_ids: ['{{ p.slug }}'], content_type: 'product', value: {{ p.price }}, currency: '{{ p.currency }}'});
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id={{ site.meta_pixel_id }}&ev=PageView&noscript=1" alt=""></noscript>
+{% endif %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="{{ p.theme.fonts_url }}" rel="stylesheet">
+<style>
+  /* Theme: {{ p.name }} - layout: hero (copy + phone demo), feature grid, "not a template" table, steps, get/need, FAQ, final CTA */
+  :root {
+    --bg:{{ p.theme.bg }}; --ink:{{ p.theme.ink }}; --muted:{{ p.theme.muted }}; --line:{{ p.theme.line }}; --panel:{{ p.theme.panel }};
+    --accent:{{ p.theme.accent }}; --btn-bg:{{ p.theme.btn_bg }}; --btn-ink:{{ p.theme.btn_ink }};
+    --sans: {{ p.theme.sans }}; --display: {{ p.theme.display }};
+    color-scheme: {{ p.theme.scheme }};
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  a { color:inherit; text-decoration:none; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 22px; }
+  nav { display:flex; justify-content:space-between; align-items:center; height:64px; }
+  .logo { font-weight:800; font-size:20px; letter-spacing:-0.6px; }
+  .logo i { font-style:normal; color:var(--accent); }
+  .navlink { font-size:14px; color:var(--muted); font-weight:500; }
+  .navlink:hover { color:var(--ink); }
+  .hero { display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px; align-items:center; padding:48px 0 80px; }
+  .eyebrow { font-size:12px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--accent); }
+  h1 { font-family:var(--display); font-style:{{ p.theme.display_style }}; font-weight:600; font-size:clamp(70px, 12vw, 128px); line-height:0.95; letter-spacing:-2px; margin:12px 0 18px; }
+  .lead { font-size:19px; color:var(--muted); max-width:520px; }
+  .lead b { color:var(--ink); font-weight:600; }
+  .buy { display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin:30px 0 12px; }
+  .price { font-size:44px; font-weight:800; letter-spacing:-1.5px; }
+  .price small { font-size:14px; color:var(--muted); font-weight:500; letter-spacing:0; margin-left:6px; }
+  .btn { display:inline-flex; align-items:center; gap:10px; height:56px; padding:0 28px; border-radius:14px; background:var(--btn-bg); color:var(--btn-ink); font-weight:700; font-size:16px; transition:transform .15s ease, opacity .15s ease; }
+  .btn:hover { transform:translateY(-1px); opacity:.92; }
+  .btn:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+  .note { font-size:13px; color:var(--muted); }
+  .phone { position:relative; justify-self:center; width:min(340px, 82vw); aspect-ratio:9/16; border-radius:38px; padding:10px; background:{{ p.theme.phone_bg }}; box-shadow:0 40px 90px rgba(0,0,0,.45), 0 0 0 1px var(--line) inset; }
+  .phone video { width:100%; height:100%; object-fit:cover; border-radius:30px; display:block; background:#000; }
+  .sound { position:absolute; right:22px; bottom:22px; border:0; cursor:pointer; font:600 12px var(--sans); color:#fff; background:rgba(0,0,0,.55); backdrop-filter:blur(8px); padding:8px 12px; border-radius:999px; }
+  .glow { position:absolute; inset:-30%; background:radial-gradient(closest-side, {{ p.theme.glow }}, transparent 70%); z-index:-1; filter:blur(10px); }
+  section { padding:72px 0; border-top:1px solid var(--line); }
+  h2 { font-size:clamp(30px, 4.6vw, 44px); font-weight:700; letter-spacing:-1.4px; line-height:1.08; max-width:720px; text-wrap:balance; }
+  h2 em { font-family:var(--display); font-style:{{ p.theme.display_style }}; font-weight:600; letter-spacing:-0.5px; }
+  .sub { color:var(--muted); margin:14px 0 34px; max-width:620px; }
+  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:24px; }
+  .card .k { font-size:12px; color:var(--accent); font-weight:700; letter-spacing:1px; }
+  .card h3 { font-size:18px; font-weight:600; margin:10px 0 6px; letter-spacing:-0.3px; }
+  .card p { color:var(--muted); font-size:14.5px; }
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  th, td { text-align:left; padding:14px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:12px; color:var(--muted); font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+  td:first-child { font-weight:600; white-space:nowrap; }
+  td:last-child { color:var(--muted); }
+  .tablewrap { overflow-x:auto; border:1px solid var(--line); border-radius:18px; background:var(--panel); }
+  .steps { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; counter-reset:s; margin-top:30px; }
+  .step { counter-increment:s; padding:22px; border-radius:18px; border:1px solid var(--line); }
+  .step::before { content:counter(s, decimal-leading-zero); font-family:var(--display); font-style:{{ p.theme.display_style }}; font-size:34px; color:var(--accent); display:block; margin-bottom:6px; }
+  .step b { display:block; margin-bottom:4px; }
+  .step span { color:var(--muted); font-size:14.5px; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .two h2 { font-size:30px; margin:10px 0 20px; }
+  ul.list { list-style:none; display:grid; gap:10px; }
+  ul.list li { padding-left:26px; position:relative; color:var(--muted); }
+  ul.list li b { color:var(--ink); font-weight:600; }
+  ul.list li::before { content:""; position:absolute; left:2px; top:9px; width:11px; height:6px; border-left:2.5px solid var(--accent); border-bottom:2.5px solid var(--accent); transform:rotate(-45deg); }
+  .final { text-align:center; padding:96px 0; }
+  .final h2 { margin:0 auto 10px; }
+  .final .buy { justify-content:center; }
+  details { border-bottom:1px solid var(--line); padding:18px 0; }
+  summary { cursor:pointer; font-weight:600; list-style:none; display:flex; justify-content:space-between; gap:16px; }
+  summary::after { content:"+"; color:var(--muted); font-weight:400; }
+  details[open] summary::after { content:"–"; }
+  details p { color:var(--muted); margin-top:10px; font-size:15px; }
+  footer { border-top:1px solid var(--line); padding:28px 0 48px; color:var(--muted); font-size:13px; }
+  @media (max-width: 860px) {
+    .hero { grid-template-columns:1fr; gap:36px; padding-top:24px; }
+    .phone { order:-1; }
+    .grid, .steps, .two { grid-template-columns:1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="logo" href="/">cutt<i>it</i></a>
+    <a class="navlink" href="#buy">Get {{ p.name }} →</a>
+  </nav>
+
+  <div class="hero">
+    <div>
+      <div class="eyebrow">{{ p.eyebrow }}</div>
+      <h1>{{ p.name }}</h1>
+      <p class="lead">{{ p.lead | safe }}</p>
+      <div class="buy" id="buy">
+        <div class="price">{{ p.price_label }}<small>one-time</small></div>
+        <a class="btn" data-buy href="{{ p.buy_url }}" target="_blank" rel="noopener">Get {{ p.name }} →</a>
+      </div>
+      <p class="note">{{ p.buy_note }}</p>
+    </div>
+    <div class="phone">
+      <div class="glow"></div>
+      <video id="demo" src="{{ p.demo }}" poster="{{ p.poster }}" autoplay muted loop playsinline preload="metadata"></video>
+      <button class="sound" id="sound" type="button">Tap for sound</button>
+    </div>
+  </div>
+
+  <section>
+    <div class="eyebrow">What it does</div>
+    <h2>{{ p.features_title | safe }}</h2>
+    <p class="sub">{{ p.features_sub }}</p>
+    <div class="grid">
+      {% for f in p.features %}<div class="card"><div class="k">{{ f.k }}</div><h3>{{ f.h }}</h3><p>{{ f.p }}</p></div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if p.beats %}<section>
+    <div class="eyebrow">Not a template</div>
+    <h2>{{ p.beats_title | safe }}</h2>
+    <p class="sub">{{ p.beats_sub }}</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>When you say…</th><th>{{ p.name }} might use</th></tr></thead>
+      <tbody>{% for b in p.beats %}<tr><td>{{ b[0] }}</td><td>{{ b[1] }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>{% endif %}
+
+  <section>
+    <div class="eyebrow">How it works</div>
+    <h2>{{ p.steps_title }}</h2>
+    <div class="steps">{% for s in p.steps %}<div class="step"><b>{{ s[0] }}</b><span>{{ s[1] }}</span></div>{% endfor %}</div>
+  </section>
+
+  <section>
+    <div class="two">
+      <div><div class="eyebrow">What you get</div><h2>{{ p.get_title }}</h2>
+        <ul class="list">{% for g in p.includes %}<li>{{ g | safe }}</li>{% endfor %}</ul></div>
+      <div><div class="eyebrow">What you need</div><h2>Honest requirements</h2>
+        <ul class="list">{% for g in p.need %}<li>{{ g | safe }}</li>{% endfor %}</ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Questions</div>
+    {% for q in p.faq %}<details><summary>{{ q[0] }}</summary><p>{{ q[1] }}</p></details>{% endfor %}
+  </section>
+
+  <div class="final">
+    <h2>{{ p.final_title | safe }}</h2>
+    <div class="buy"><div class="price">{{ p.price_label }}<small>one-time</small></div><a class="btn" data-buy href="{{ p.buy_url }}" target="_blank" rel="noopener">Get {{ p.name }} →</a></div>
+  </div>
+</div>
+
+<footer><div class="wrap">© <span id="y"></span> {{ site.brand }} · Not affiliated with Anthropic. Claude is a trademark of Anthropic.{% if p.footer_note %} {{ p.footer_note }}{% endif %}</div></footer>
+
+<script>
+  document.getElementById("y").textContent = new Date().getFullYear();
+  const v = document.getElementById("demo"), b = document.getElementById("sound");
+  b.addEventListener("click", () => { v.muted = !v.muted; if (!v.muted) { v.currentTime = 0; v.play(); } b.textContent = v.muted ? "Tap for sound" : "Sound on"; });
+  // keep ad tracking parameters (utm_*, fbclid) on the checkout link
+  const qs = window.location.search;
+  document.querySelectorAll("[data-buy]").forEach(a => {
+    if (qs && a.href.startsWith("http")) { const u = new URL(a.href); new URLSearchParams(qs).forEach((val, key) => { if (/^utm_|^fbclid$/.test(key)) u.searchParams.set(key, val); }); a.href = u.toString(); }
+    a.addEventListener("click", () => { if (window.fbq) fbq("track", "InitiateCheckout", { content_name: "{{ p.name }}", content_ids: ["{{ p.slug }}"], value: {{ p.price }}, currency: "{{ p.currency }}" }); });
+  });
+</script>
+</body>
+</html>
