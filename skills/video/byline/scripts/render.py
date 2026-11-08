@@ -26,7 +26,8 @@ def run(cmd):
 
 
 def load_style(plan):
-    st = json.load(open(os.path.join(HERE, "..", "style.json")))
+    sp = plan.get("style_path")
+    st = json.load(open(sp if sp and os.path.isabs(sp) else os.path.join(HERE, "..", "style.json") if not sp else os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), sp)))
     for k, v in plan.get("style", {}).items():
         if isinstance(v, dict) and isinstance(st.get(k), dict):
             st[k].update(v)
@@ -233,12 +234,12 @@ def heart_pts(cx, cy, r, n=80):
     return [(cx + r * xi / 17, cy - r * yi / 17) for xi, yi in zip(x, y)]
 
 
-def chip_flat(fonts, text, color, st, shape="pill", icon=None):
+def chip_flat(fonts, text, color, st, shape="pill", icon=None, text_color=(255, 255, 255)):
     c = st["chips"]
-    t_img, base, adv = word_img(fonts, text, c.get("pop_font", "sans"), c.get("pop_px", 58))
+    t_img, base, adv = word_img(fonts, text, c.get("pop_font", "sans"), c.get("pop_px", 58), color=text_color)
     bb = t_img.getbbox(); t_img = t_img.crop(bb)
     if icon:
-        ic = draw_icon(icon, int(t_img.height * 1.05))
+        ic = draw_icon(icon, int(t_img.height * 1.05), text_color)
         gap = int(t_img.height * 0.45)
         comb = Image.new("RGBA", (ic.width + gap + t_img.width, max(ic.height, t_img.height)), (0, 0, 0, 0))
         comb.alpha_composite(ic, (0, (comb.height - ic.height) // 2)); comb.alpha_composite(t_img, (ic.width + gap, (comb.height - t_img.height) // 2))
@@ -367,8 +368,35 @@ def main(plan_path):
         col = st["colors"]["chip_" + c.get("color", "blue")]; gl = rgba_css(st["colors"]["chip_" + c.get("color", "blue") + "_glow"])
         for it in c["items"]: it["img"] = pill(fonts, it["text"], col, gl, st)
     blue = hex_rgb(st["colors"]["chip_blue"][0])
-    pop = cs.get("mode", "pop") == "pop"
-    if pop:
+    word_pop = cs.get("mode", "pop") == "word_pop"
+    pop = cs.get("mode", "pop") in ("pop", "word_pop")
+    if word_pop:
+        pcol = hex_rgb(cs.get("power_color", "#FFD700"))
+        for c in caps:
+            c["pw"] = []
+            for i_, w_ in enumerate(c["words"]):
+                pw_ = i_ in c.get("power", [])
+                size = int(cs["sans_px"] * cs.get("power_scale", 2.5)) if pw_ else cs["sans_px"]
+                txt_ = w_.upper() if (pw_ and cs.get("power_upper", False)) else w_
+                im_, bo_, adv_ = word_img(fonts, txt_, "sans", size, color=pcol if pw_ else (255, 255, 255))
+                if pw_ and adv_ > cs.get("max_width", 960):  # fit very long power words
+                    k_ = cs.get("max_width", 960) / adv_; size = int(size * k_)
+                    im_, bo_, adv_ = word_img(fonts, txt_, "sans", size, color=pcol)
+                if pw_:
+                    a_ = im_.split()[3]
+                    g1 = a_.filter(ImageFilter.GaussianBlur(size * 0.10)).point(lambda v: int(min(255, v * 1.3)))
+                    g2 = a_.filter(ImageFilter.GaussianBlur(size * 0.28)).point(lambda v: int(v * 0.7))
+                    glow = Image.new("RGBA", im_.size, (0, 0, 0, 0))
+                    for g_ in (g2, g1): glow = Image.alpha_composite(glow, Image.merge("RGBA", (*[Image.new("L", im_.size, v) for v in pcol], g_)))
+                    im_ = Image.alpha_composite(glow, tight_shadow(im_, st))
+                else:
+                    im_ = tight_shadow(im_, st)
+                c["pw"].append(dict(img=im_, bo=bo_, adv=adv_, power=pw_, size=size))
+            gap_ = cs["sans_px"] * 0.30
+            tot_ = sum(x["adv"] for x in c["pw"]) + gap_ * (len(c["pw"]) - 1)
+            x_ = W / 2 - tot_ / 2
+            for q_ in c["pw"]: q_["x"] = x_; x_ += q_["adv"] + gap_
+    if pop and not word_pop:
         for c in caps:
             c["pw"] = []
             for i_, w_ in enumerate(c["words"]):
@@ -379,10 +407,13 @@ def main(plan_path):
             tot_ = sum(x["adv"] for x in c["pw"]) + gap_ * (len(c["pw"]) - 1)
             x_ = W / 2 - tot_ / 2
             for q_ in c["pw"]: q_["x"] = x_; x_ += q_["adv"] + gap_
+    if pop:
         for c in chips:
             for it in c["items"]:
-                it["img"] = chip_flat(fonts, it["text"], st["colors"]["chip_" + it.get("color", c.get("color", "blue"))][0], st, c.get("shape", "pill"), it.get("icon"))
-        if cta and cta.get("cycle"):
+                ccol = it.get("color", c.get("color", "blue"))
+                tcol = (17, 17, 20) if ccol == "white" else (255, 255, 255)
+                it["img"] = chip_flat(fonts, it["text"], st["colors"]["chip_" + ccol][0], st, c.get("shape", "pill"), it.get("icon"), tcol)
+    if pop and cta and cta.get("cycle"):
             bimg, bbo, _ = word_img(fonts, cta["word"].upper(), "serif", st["cta"]["big_px"])
             cta["bigp"], cta["bbo"] = tight_shadow(bimg, st), bbo
             cta["cyc"] = []
@@ -541,9 +572,101 @@ def main(plan_path):
         if fo < 1: lay.putalpha(lay.split()[3].point(lambda v: int(v * max(fo, 0))))
         img.alpha_composite(lay, (int(cx - lay.width / 2), int(cyy - lay.height / 2)))
 
+    def bounce_in(age, frames=9):
+        return spring(age * AF / frames, (0.0, 0.7, 1.16, 0.95, 1.0))
+
+    def flame(size):
+        K = 4; S_ = size * K; im = Image.new("RGBA", (S_, S_), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+        pts = [(S_ * .5, S_ * .02), (S_ * .78, S_ * .38), (S_ * .86, S_ * .66), (S_ * .7, S_ * .9), (S_ * .5, S_ * .98),
+               (S_ * .3, S_ * .9), (S_ * .14, S_ * .66), (S_ * .24, S_ * .42), (S_ * .36, S_ * .52)]
+        d.polygon(pts, fill=(255, 120, 20, 255))
+        inner = [(S_ * .5, S_ * .36), (S_ * .68, S_ * .62), (S_ * .62, S_ * .86), (S_ * .5, S_ * .92), (S_ * .38, S_ * .86), (S_ * .32, S_ * .66)]
+        d.polygon(inner, fill=(255, 215, 0, 255))
+        return im.resize((size, size), Image.LANCZOS)
+
+    def ember_graphic(img, g, t, age):
+        """Ember UI widgets: progress bar, weekday calendar, polaroid PiP."""
+        dur = g["t1"] - g["t0"]; out_k = 1 - ease_in_cubic((age - (dur - 0.2)) / 0.2)
+        sc = bounce_in(age) * (1 - 0.1 * ease_in_cubic((age - (dur - 0.2)) / 0.2))
+        if sc <= 0.02 or out_k <= 0.01: return
+        yel = hex_rgb(st["colors"].get("power", "#FFD700"))
+        K = 2
+        if g["type"] == "progress":
+            Wd, Hd = 840, 210
+            L = Image.new("RGBA", (Wd * K, Hd * K), (0, 0, 0, 0)); d = ImageDraw.Draw(L)
+            d.rounded_rectangle((0, 0, Wd * K - 1, Hd * K - 1), 44 * K, fill=(16, 16, 18, 225), outline=(255, 255, 255, 40), width=2 * K)
+            lf = fonts.get("sans", 36 * K)
+            d.text((44 * K, 58 * K), g.get("label", "PROGRESS"), font=lf, fill=(255, 255, 255, 235), anchor="lm")
+            q = ease_out(min(1, max(0, (age - 0.25) / g.get("fill_s", 1.0))))
+            pct = g.get("value", 0.9) * q
+            d.text((Wd * K - 44 * K, 58 * K), f"{int(round(pct * 100))}%", font=lf, fill=yel + (255,), anchor="rm")
+            x0, y0, x1, y1 = 44 * K, 116 * K, Wd * K - 44 * K, 160 * K
+            d.rounded_rectangle((x0, y0, x1, y1), 22 * K, fill=(255, 255, 255, 30))
+            xf = x0 + (x1 - x0) * pct
+            if xf > x0 + 10:
+                bar = Image.new("RGBA", L.size, (0, 0, 0, 0)); bd = ImageDraw.Draw(bar)
+                bd.rounded_rectangle((x0, y0, xf, y1), 22 * K, fill=yel + (255,))
+                gl = bar.split()[3].filter(ImageFilter.GaussianBlur(14 * K)).point(lambda v: int(v * 0.8))
+                L.alpha_composite(Image.merge("RGBA", (*[Image.new("L", L.size, v) for v in yel], gl))); L.alpha_composite(bar)
+            fl = flame(70 * K); L.alpha_composite(fl, (int(xf - fl.width / 2), int((y0 + y1) / 2 - fl.height * 0.62)))
+            L = L.resize((Wd, Hd), Image.LANCZOS)
+        elif g["type"] == "week":
+            days = g.get("days", ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"])
+            Wd, Hd = 880, 250
+            L = Image.new("RGBA", (Wd * K, Hd * K), (0, 0, 0, 0)); d = ImageDraw.Draw(L)
+            d.rounded_rectangle((0, 0, Wd * K - 1, Hd * K - 1), 40 * K, fill=(250, 250, 252, 245))
+            tf = fonts.get("sans", 30 * K); nf = fonts.get("sans", 44 * K)
+            if g.get("title"): d.text((44 * K, 48 * K), g["title"], font=fonts.get("sans", 32 * K), fill=(20, 20, 24, 255), anchor="lm")
+            step = g.get("step_s", 0.18); cur = min(len(days) - 1, int(max(0, age - 0.3) / step))
+            cw_ = (Wd * K - 88 * K) / len(days)
+            for i_, dname in enumerate(days):
+                cx_ = 44 * K + cw_ * (i_ + 0.5)
+                d.text((cx_, 112 * K), dname, font=tf, fill=(140, 140, 150, 255), anchor="mm")
+                num = str(g.get("start", 12) + i_)
+                if i_ == cur:
+                    R = 46 * K; d.ellipse((cx_ - R, 178 * K - R, cx_ + R, 178 * K + R), fill=(255, 61, 85, 255))
+                    d.text((cx_, 178 * K), num, font=nf, fill=(255, 255, 255, 255), anchor="mm")
+                else:
+                    d.text((cx_, 178 * K), num, font=nf, fill=(20, 20, 24, 255) if i_ > cur else (190, 190, 198, 255), anchor="mm")
+                    if i_ < cur: d.line((cx_ - 30 * K, 178 * K + 26 * K, cx_ + 30 * K, 178 * K - 26 * K), fill=(255, 61, 85, 200), width=5 * K)
+            L = L.resize((Wd, Hd), Image.LANCZOS)
+        elif g["type"] == "polaroid":
+            ph = Image.open(os.path.join(wd, g["file"])).convert("RGB")
+            s_ = min(ph.size); ph = ph.crop(((ph.width - s_) // 2, (ph.height - s_) // 2, (ph.width + s_) // 2, (ph.height + s_) // 2)).resize((330, 330))
+            L = Image.new("RGBA", (330 + 40, 330 + 100), (250, 250, 248, 255)); L.paste(ph, (20, 20))
+            L = L.rotate(g.get("angle", -6), resample=Image.BICUBIC, expand=True)
+        else:
+            return
+        L = drop_shadow(L, blur=14, alpha=0.5, dy=10)
+        if sc != 1.0: L = L.resize((max(1, int(L.width * sc)), max(1, int(L.height * sc))), Image.BILINEAR)
+        if out_k < 1: L.putalpha(L.split()[3].point(lambda v: int(v * out_k)))
+        cy_ = g.get("y", 0.72) * H + 5 * np.sin(2 * np.pi * 0.45 * age)
+        img.alpha_composite(L, (int(g.get("x", 0.5) * W - L.width / 2), int(cy_ - L.height / 2)))
+
+    fullscreens = [dict(f, t0=T(f["t0"]), t1=T(f["t1"])) for f in plan.get("fullscreens", [])]
+
+    def draw_fullscreen(fs, t):
+        """Full-screen graphic background (captions keep popping on top)."""
+        age = t - fs["t0"]
+        yy_, xx_ = np.mgrid[0:H:4, 0:W:4].astype(np.float32)
+        d_ = np.exp(-(((xx_ - W / 2) / (W * 0.7)) ** 2 + ((yy_ - H * 0.7) / (H * 0.5)) ** 2))
+        bgarr = (np.zeros(d_.shape + (3,), np.float32) + 10) + np.array([255, 170, 0], np.float32) * 0.22 * d_[..., None]
+        bgi = Image.fromarray(bgarr.clip(0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR).convert("RGBA")
+        if fs.get("type", "tallbar") == "tallbar":
+            yel = hex_rgb(st["colors"].get("power", "#FFD700"))
+            q = ease_out(min(1, age / fs.get("fill_s", 0.9)))
+            bw = fs.get("bar_w", 440); top = H - 120 - (H * fs.get("fill", 0.72)) * q
+            bar = Image.new("RGBA", (W, H), (0, 0, 0, 0)); bd = ImageDraw.Draw(bar)
+            bd.rounded_rectangle((W / 2 - bw / 2, top, W / 2 + bw / 2, H - 120), 36, fill=yel + (255,))
+            gl = bar.split()[3].filter(ImageFilter.GaussianBlur(60)).point(lambda v: int(v * 0.7))
+            bgi.alpha_composite(Image.merge("RGBA", (*[Image.new("L", (W, H), v) for v in yel], gl))); bgi.alpha_composite(bar)
+        return bgi
+
     def draw_graphic(img, g, t):
         if not (g["t0"] <= t < g["t1"]): return
         cy = g.get("y", 0.7) * H; age = t - g["t0"]
+        if g["type"] in ("progress", "week", "polaroid"):
+            ember_graphic(img, g, t, age); return
         if g["type"] in ("ring", "burst"):
             draw_overlay_fx(img, g, t, age); return
         if g["type"] in ("bars", "lock", "heart", "calendar", "arrow"):
@@ -787,7 +910,9 @@ def main(plan_path):
     dec = subprocess.Popen(["ffmpeg", "-v", "error", "-i", base, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
     dec_raw = subprocess.Popen(["ffmpeg", "-v", "error", "-i", ungraded, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE) if wm else None
     silent = os.path.join(wd, "_video.mp4")
-    enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+    reuse = plan.get("reuse_frames") and os.path.exists(silent)
+    if reuse: nfr = 0
+    enc = None if reuse else subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
                             "-c:v", "libx264", "-crf", "17", "-pix_fmt", "yuv420p", silent], stdin=subprocess.PIPE)
     tf = cam["transition"]["frames"]; flash = cam["after_cut_flash"]; push = cam.get("push_per_s", 0.012)
     smooth = plan.get("camera_mode", cam.get("mode", "smooth")) == "smooth"
@@ -822,6 +947,7 @@ def main(plan_path):
     trans_pts = plan.get("transitions_extra", [])
     trans_pts = [T(x) for x in trans_pts] + [c["t0"] for c in cutaways] + [c["t1"] for c in cutaways]
     trans_pts += [c["t0"] for c in cards] + [c["t1"] for c in cards] + [a for a, b in bw] + [b for a, b in bw]
+    trans_pts += [T(f["t0"]) for f in plan.get("fullscreens", [])] + [T(f["t1"]) for f in plan.get("fullscreens", [])]
     trans_pts = sorted(set(round(x, 3) for x in trans_pts))
     rb_frames, rb_peak = cam.get("radial_frames", 6), cam.get("radial_strength", 0.14)
 
@@ -1016,10 +1142,22 @@ def main(plan_path):
                     si = ci_.resize((int(ci_.width * ss), int(ci_.height * ss)), Image.BILINEAR)
                     img.alpha_composite(si, (int(W / 2 - si.width / 2), int(cyb + st["cta"]["small_px"] * 1.5 - cbo_ * ss)))
             else:
-                y = cap_base
+                fs_ = next((f for f in fullscreens if f["t0"] <= t < f["t1"]), None)
+                if fs_: img = draw_fullscreen(fs_, t)
+                y = fs_.get("caption_y", 0.30) * H if fs_ else cap_base
                 c = next((c for c in caps if c["t0"] <= t < c["t1"]), None)
                 ch = next((c for c in chips if c["t0"] <= t < c["t1"]), None)
-                if c and not ch:
+                if c and word_pop:
+                    for q_, wt_ in zip(c["pw"], c["wt"]):
+                        if t < wt_: continue
+                        sc_ = spring((t - wt_) * AF / cs.get("pop_frames", 6), (0.0, 0.7, 1.18, 0.94, 1.0))
+                        if q_["power"]: sc_ *= 1 + cs.get("power_grow_per_s", 0.12) * (t - wt_)
+                        if sc_ <= 0.02: continue
+                        im_ = q_["img"].resize((max(1, int(q_["img"].width * sc_)), max(1, int(q_["img"].height * sc_))), Image.BILINEAR)
+                        cxw = q_["x"] + q_["adv"] / 2
+                        cyw = y - q_["size"] * 0.36  # visual centre of the word
+                        img.alpha_composite(im_, (int(cxw - im_.width / 2), int(cyw - (q_["bo"] - q_["size"] * 0.36) * sc_)))
+                elif c and not ch:
                     hgt = int(cs["sans_px"] * 4); base_ = int(cs["sans_px"] * 2.6)
                     line = Image.new("RGBA", (W, hgt), (0, 0, 0, 0))
                     for q_ in c["pw"]:
@@ -1038,7 +1176,7 @@ def main(plan_path):
                 if ch:
                     shown = [it for it in ch["items"] if it["t"] <= t]
                     hs = [it["img"].height for it in shown]
-                    yy = y - 30 - (sum(hs) + st["chips"]["stack_gap_px"] * (len(shown) - 1)) / 2
+                    yy = (ch.get("y", 0.76) * H if word_pop else y - 30) - (sum(hs) + st["chips"]["stack_gap_px"] * (len(shown) - 1)) / 2
                     fade_c = 1 - ease_in_cubic((t - (ch["t1"] - 0.22)) / 0.22)
                     for it, h0 in zip(shown, hs):
                         sc = spring((t - it["t"]) * AF / st["chips"].get("pop_frames", 10), (0.0, 0.7, 1.18, 0.95, 1.0))
@@ -1122,10 +1260,11 @@ def main(plan_path):
             if fa > 0.01:
                 frame_out = np.clip(apply_flash(frame_out.astype(np.float32), fa), 0, 255).astype(np.uint8)
         enc.stdin.write(frame_out.tobytes())
-    enc.stdin.close(); enc.wait(); dec.wait()
+    if enc: enc.stdin.close(); enc.wait()
+    dec.stdout.close(); dec.kill(); dec.wait()  # never block on unread frames
     for c in cutaways:
         if c["dec"]: c["dec"].stdout.close(); c["dec"].kill(); c["dec"].wait()
-    if dec_raw: dec_raw.wait()
+    if dec_raw: dec_raw.stdout.close(); dec_raw.kill(); dec_raw.wait()
 
     # 5) audio: voice + SFX (plan + automatic) + ducked music bed
     with wave.open(voice) as w: v = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768

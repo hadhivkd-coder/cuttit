@@ -1,0 +1,203 @@
+{
+  "name": "ember",
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "safe_area": [
+      0,
+      250,
+      1080,
+      1670
+    ]
+  },
+  "fonts": {
+    "sans": {
+      "family": "Montserrat",
+      "file": "Montserrat.ttf",
+      "weight": 900,
+      "tracking": -0.02,
+      "source": "Google Fonts (OFL)"
+    },
+    "serif": {
+      "family": "Montserrat",
+      "file": "Montserrat.ttf",
+      "weight": 900,
+      "tracking": -0.02,
+      "source": "Google Fonts (OFL)"
+    }
+  },
+  "colors": {
+    "white": "#FFFFFF",
+    "black": "#0A0A0A",
+    "paper": "#FAFAFA",
+    "ghost": "rgba(255,255,255,0.35)",
+    "chip_blue": [
+      "#2F7BFF",
+      "#5AA8FF"
+    ],
+    "chip_blue_glow": "rgba(60,140,255,0.55)",
+    "chip_red": [
+      "#FF3D55",
+      "#FF7A88"
+    ],
+    "chip_red_glow": "rgba(255,70,90,0.55)",
+    "power": "#FFD700",
+    "chip_white": [
+      "#FFFFFF",
+      "#FFFFFF"
+    ],
+    "chip_white_glow": "rgba(255,255,255,0.35)"
+  },
+  "captions": {
+    "words_per_caption": [
+      1,
+      2
+    ],
+    "y_rule": "chin_y + 0.17*H, clamped to 0.44H..0.62H",
+    "sans_px": 78,
+    "exit": "hard cut on the frame the next chunk starts",
+    "emphasis_share": "1 power word per sentence, max 1 per 2 s",
+    "mode": "word_pop",
+    "power_scale": 2.5,
+    "power_grow_per_s": 0.12,
+    "pop_frames": 6,
+    "shadow_tight": {
+      "blur": 3,
+      "opacity": 0.75,
+      "dy": 3
+    },
+    "power_color": "#FFD700",
+    "max_width": 960
+  },
+  "word_cards": {
+    "black": {
+      "bg": "#0A0A0B",
+      "font": "sans",
+      "px": 150,
+      "color": "#FFD700"
+    },
+    "white": {
+      "bg": "#FAFAFA",
+      "font": "sans",
+      "px": 150,
+      "color": "#0A0A0B"
+    },
+    "scale_from_to": [
+      1.0,
+      1.08
+    ]
+  },
+  "chips": {
+    "radius": "pill",
+    "padding_px": [
+      22,
+      40
+    ],
+    "font": "serif",
+    "px": 70,
+    "text": "#FFFFFF",
+    "inner_highlight": "top 40% white 18%",
+    "glow_px": 30,
+    "enter": {
+      "frames": 6,
+      "scale": [
+        0.0,
+        1.12,
+        1.0
+      ]
+    },
+    "stack_gap_px": 18,
+    "hold": "until the list ends + 0.5 s",
+    "sfx": "pop",
+    "pop_font": "sans",
+    "pop_px": 50,
+    "pop_frames": 8,
+    "box_radius": 22
+  },
+  "camera": {
+    "punch_in_scale": [
+      1.0,
+      1.12
+    ],
+    "punch_every_s": [
+      1.2,
+      2.5
+    ],
+    "after_cut_flash": {
+      "brightness": 0.08,
+      "decay_frames": 12
+    },
+    "transition": {
+      "type": "zoom_blur",
+      "frames": 4,
+      "scale": [
+        1.0,
+        1.06
+      ],
+      "blur": "radial"
+    },
+    "max_unchanged_s": 3.0,
+    "push_per_s": 0.012,
+    "transition_type": "flash",
+    "flash_peak": 0.75
+  },
+  "bw_punch": {
+    "trigger": "negative / mistake / 'wrong' phrase",
+    "zoom": 1.04,
+    "sfx": "glitch"
+  },
+  "cta": {
+    "small": "comment",
+    "small_px": 60,
+    "big_px": 180,
+    "big_font": "serif",
+    "uppercase": true,
+    "quotes": true,
+    "sfx": [
+      "whoosh",
+      "low_hit"
+    ]
+  },
+  "audio": {
+    "dead_air": {
+      "silence_db": -35,
+      "min_gap_s": 0.25,
+      "keep_pad_s": 0.06
+    },
+    "voice_lufs": -14,
+    "music": {
+      "optional": true,
+      "bpm": [
+        85,
+        95
+      ],
+      "level_db_under_voice": -17,
+      "duck": "sidechain, fast attack"
+    },
+    "sfx_levels_db": {
+      "deep_whoosh": -15,
+      "whoosh": -24,
+      "pop": -16,
+      "click": -20,
+      "glitch": -19,
+      "low_hit": -13,
+      "riser": -22
+    },
+    "risers": false,
+    "sfx_lead_frames": 0
+  },
+  "pacing": {
+    "avg_shot_s": [
+      1.2,
+      2.0
+    ],
+    "visual_changes_per_min": [
+      35,
+      40
+    ]
+  },
+  "grade": {
+    "ffmpeg": "colorbalance=rs=0.06:gs=0.02:bs=-0.07:rm=0.05:gm=0.01:bm=-0.05:rh=0.03:bh=-0.04,eq=contrast=1.14:saturation=1.15:brightness=-0.02,unsharp=5:5:0.5"
+  }
+}
