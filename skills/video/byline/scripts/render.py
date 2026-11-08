@@ -357,7 +357,8 @@ def main(plan_path):
     chips = [dict(c, t0=T(c["t0"]), t1=T(c["t1"]), items=[dict(i, t=T(i["t"])) for i in c["items"]]) for c in plan.get("chips", [])]
     stats = [dict(s, t0=T(s["t0"]), t1=T(s["t1"])) for s in plan.get("stats", [])]
     bw = [(T(a), T(b)) for a, b in plan.get("bw", [])]
-    scales = sorted([(T(t), s) for t, s in plan.get("scales", [[0, 1.0]])])
+    scales_raw = sorted([[T(k[0])] + list(k[1:]) for k in plan.get("scales", [[0, 1.0]])], key=lambda k: k[0])
+    scales = [(k[0], k[1]) for k in scales_raw]
     cta = plan.get("cta")
     if cta: cta = dict(cta, t0=T(cta["t0"]))
 
@@ -712,6 +713,55 @@ def main(plan_path):
         bgi = Image.fromarray(bgarr.clip(0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR).convert("RGBA")
         if fs.get("type") == "black":
             return Image.new("RGBA", (W, H), (0, 0, 0, 255))
+        if fs.get("type") == "clock":
+            # motion-graphic b-roll: time slipping away (hands spin, ring glows)
+            K = 2; R = 300; cx, cy = W / 2, H * fs.get("y", 0.47)
+            lay = Image.new("RGBA", (2 * R * K + 200, 2 * R * K + 200), (0, 0, 0, 0)); d = ImageDraw.Draw(lay); C = lay.width / 2
+            sc0 = spring(age * AF / 6, (0.0, 0.75, 1.1, 1.0))
+            d.ellipse((C - R * K, C - R * K, C + R * K, C + R * K), fill=(22, 20, 18, 255), outline=(255, 214, 0, 255), width=10 * K)
+            for k_ in range(60):
+                a_ = 2 * np.pi * k_ / 60; L1 = R * K * (0.86 if k_ % 5 == 0 else 0.91)
+                d.line((C + np.cos(a_) * L1, C + np.sin(a_) * L1, C + np.cos(a_) * R * K * 0.95, C + np.sin(a_) * R * K * 0.95),
+                       fill=(255, 255, 255, 230 if k_ % 5 == 0 else 120), width=(6 if k_ % 5 == 0 else 3) * K)
+            spin = fs.get("spin", 2.2)
+            for ang, ln, wd_, colr in ((age * spin * 2 * np.pi - np.pi / 2, 0.78, 10, (255, 255, 255)), (age * spin / 12 * 2 * np.pi - np.pi / 2 + 1.2, 0.5, 16, (255, 214, 0))):
+                d.line((C, C, C + np.cos(ang) * R * K * ln, C + np.sin(ang) * R * K * ln), fill=colr + (255,), width=wd_ * K)
+            d.ellipse((C - 16 * K, C - 16 * K, C + 16 * K, C + 16 * K), fill=(255, 214, 0, 255))
+            lay = lay.resize((lay.width // K, lay.height // K), Image.LANCZOS)
+            gl = lay.split()[3].filter(ImageFilter.GaussianBlur(40)).point(lambda v: int(v * 0.35))
+            lay = Image.alpha_composite(Image.merge("RGBA", (Image.new("L", lay.size, 255), Image.new("L", lay.size, 200), Image.new("L", lay.size, 0), gl)), lay)
+            if sc0 != 1: lay = lay.resize((max(1, int(lay.width * sc0)), max(1, int(lay.height * sc0))), Image.BILINEAR)
+            bgi.alpha_composite(lay, (int(cx - lay.width / 2), int(cy - lay.height / 2)))
+            return bgi
+        if fs.get("type") == "phone":
+            # motion-graphic b-roll: notifications pile up, then get swiped away (ignored)
+            K = 1; pw_, ph_ = 560, 1080; cx, cy = W / 2, H * fs.get("y", 0.5)
+            ph_im = Image.new("RGBA", (pw_ + 40, ph_ + 40), (0, 0, 0, 0)); d = ImageDraw.Draw(ph_im)
+            d.rounded_rectangle((20, 20, 20 + pw_, 20 + ph_), 70, fill=(14, 14, 16, 255), outline=(70, 70, 76, 255), width=6)
+            d.rounded_rectangle((20 + pw_ / 2 - 70, 46, 20 + pw_ / 2 + 70, 82), 18, fill=(0, 0, 0, 255))
+            tf = lk_font("small", 120); d.text((20 + pw_ / 2, 240), fs.get("clock", "6:00"), font=tf, fill=(240, 240, 245, 255), anchor="mm")
+            df = lk_font("small", 34); d.text((20 + pw_ / 2, 320), fs.get("date", "Monday, 6 January"), font=df, fill=(170, 170, 180, 255), anchor="mm")
+            items = fs.get("items", [])
+            for k_, (title, sub) in enumerate(items):
+                ta = age - 0.15 - k_ * fs.get("stagger", 0.18)
+                if ta <= 0: continue
+                e_in = EASE_OUT_EXPO(ta / 0.4)
+                swipe_t = fs.get("swipe_at", 0.95) + k_ * 0.08
+                sx = 0.0
+                if age > swipe_t: sx = -EASE_IN_OUT_SINE(min(1, (age - swipe_t) / 0.35)) * (pw_ + 200)
+                y0 = 400 + k_ * 150 - 60 * (1 - e_in)
+                card = Image.new("RGBA", (pw_ - 60, 128), (0, 0, 0, 0)); cd = ImageDraw.Draw(card)
+                cd.rounded_rectangle((0, 0, card.width - 1, 127), 32, fill=(255, 255, 255, int(235 * min(1, e_in * 1.3))))
+                cd.rounded_rectangle((22, 28, 94, 100), 18, fill=(255, 214, 0, 255))
+                cd.text((114, 46), title, font=lk_font("round", 34), fill=(20, 20, 24, 255), anchor="lm")
+                cd.text((114, 88), sub, font=lk_font("small", 28), fill=(120, 120, 128, 255), anchor="lm")
+                ph_im.alpha_composite(card, (int(50 + sx), int(y0)))
+            msk = Image.new("L", ph_im.size, 0); ImageDraw.Draw(msk).rounded_rectangle((20, 20, 20 + pw_, 20 + ph_), 70, fill=255)
+            ph_im.putalpha(ImageChops.multiply(ph_im.split()[3], msk))
+            sc0 = spring(age * AF / 6, (0.0, 0.75, 1.08, 1.0)); ph_im = drop_shadow(ph_im, blur=24, alpha=0.6, dy=20)
+            if sc0 != 1: ph_im = ph_im.resize((max(1, int(ph_im.width * sc0)), max(1, int(ph_im.height * sc0))), Image.BILINEAR)
+            bgi.alpha_composite(ph_im, (int(cx - ph_im.width / 2), int(cy - ph_im.height / 2)))
+            return bgi
         if fs.get("type") == "motivation":
             # reference bar: white column, yellow fill rising from the bottom, small round avatar beside it
             yel = (255, 214, 0); bw = fs.get("bar_w", 300); bx = fs.get("bar_x", 0.36) * W
@@ -1003,8 +1053,11 @@ def main(plan_path):
             lk_cache[key] = f_
         return lk_cache[key]
 
-    GRAD = {"gold": [(255, 236, 80), (247, 158, 11)], "silver": [(255, 255, 255), (186, 186, 196)],
-            "white": [(255, 255, 255), (236, 226, 208)], "plain": [(255, 255, 255), (255, 255, 255)]}
+    # measured from the reference: gold runs left->right (lemon -> golden orange); silver/white are white with a warm peach base
+    GRAD = {"gold": ("h", [(0.0, (248, 244, 92)), (0.55, (247, 228, 70)), (1.0, (237, 178, 22))]),
+            "silver": ("v", [(0.0, (246, 242, 236)), (0.82, (241, 233, 224)), (1.0, (244, 206, 172))]),
+            "white": ("v", [(0.0, (255, 255, 255)), (0.85, (245, 238, 228)), (1.0, (244, 214, 186))]),
+            "plain": ("v", [(0.0, (255, 255, 255)), (1.0, (255, 255, 255))])}
 
     def lk_text(text, kind, size, fill="plain", extrude=False, tracking=0.0):
         """Text with a vertical gradient fill, soft drop shadow and optional dark extrusion. Returns (RGBA, baseline)."""
@@ -1016,11 +1069,15 @@ def main(plan_path):
         m = Image.new("L", (wdt, hgt), 0); d = ImageDraw.Draw(m); x = pad
         for ch_ in text:
             d.text((x, base), ch_, font=f_, fill=255, anchor="ls"); x += f_.getlength(ch_) + tracking * size
-        c0, c1 = GRAD.get(fill, GRAD["plain"])
-        top = base - size * 0.8; bot = base + size * 0.12
-        yy_ = np.clip((np.arange(hgt)[:, None] - top) / max(bot - top, 1), 0, 1)
-        g_ = (np.array(c0)[None, None, :] * (1 - yy_[..., None]) + np.array(c1)[None, None, :] * yy_[..., None])
-        g_ = np.repeat(g_, wdt, axis=1).astype(np.uint8)
+        dir_, stops = GRAD.get(fill, GRAD["plain"])
+        bbm = m.getbbox() or (0, 0, wdt, hgt)
+        if dir_ == "h":
+            pos = np.clip((np.arange(wdt) - bbm[0]) / max(bbm[2] - bbm[0], 1), 0, 1)
+        else:
+            pos = np.clip((np.arange(hgt) - bbm[1]) / max(bbm[3] - bbm[1], 1), 0, 1)
+        sp = np.array([a for a, _ in stops]); sc_ = np.array([c for _, c in stops], np.float32)
+        col = np.stack([np.interp(pos, sp, sc_[:, k]) for k in range(3)], -1)
+        g_ = (np.repeat(col[None, :, :], hgt, 0) if dir_ == "h" else np.repeat(col[:, None, :], wdt, 1)).astype(np.uint8)
         txt = Image.fromarray(g_, "RGB").convert("RGBA"); txt.putalpha(m)
         out_ = Image.new("RGBA", (wdt, hgt), (0, 0, 0, 0))
         sh = m.filter(ImageFilter.GaussianBlur(size * 0.10)).point(lambda v: int(v * 0.55))
@@ -1040,11 +1097,12 @@ def main(plan_path):
         if L_.get("big"): L_["big"] = dict(L_["big"], t=T(L_["big"]["t"]))
         lockups.append(L_)
 
-    def render_lockup(L_, t):
+    def render_lockup(L_, t, off=(0.0, 0.0)):
         """Lockup = small words aligned to the big word's edges + big word rising from a line. Smooth eases + soft blur."""
         age = t - L_["t0"]; dur = max(L_["t1"] - L_["t0"], 0.1); u = min(1, age / dur)
         lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         dx, dy = (np.array(L_.get("drift", [0, 0])) * EASE_IN_OUT_SINE(u)).tolist()
+        dx += off[0]; dy += off[1]
         gz = 1 + L_.get("zoom", 0.05) * u
         b_ = L_.get("big")
         bx, by = (b_.get("x", 0.5) * W, b_.get("y", 0.6) * H) if b_ else (L_.get("x", 0.5) * W, L_.get("y", 0.6) * H)
@@ -1142,6 +1200,16 @@ def main(plan_path):
     smooth = plan.get("camera_mode", cam.get("mode", "smooth")) == "smooth"
     rng = np.random.default_rng(1)
 
+    def smooth_anchor(t, base_anchor):
+        """Camera target per keyframe (side zooms). Keyframes without an anchor use the default anchor."""
+        pts = [(k[0], (k[2] * W, k[3] * H) if len(k) >= 4 else tuple(base_anchor)) for k in scales_raw]
+        if t <= pts[0][0]: return pts[0][1]
+        for (t0, a0), (t1, a1) in zip(pts, pts[1:]):
+            if t0 <= t < t1:
+                u = EASE_IN_OUT_SINE((t - t0) / max(t1 - t0, 1e-6))
+                return (a0[0] + (a1[0] - a0[0]) * u, a0[1] + (a1[1] - a0[1]) * u)
+        return pts[-1][1]
+
     def smooth_scale(t):
         """Slow eased zoom between keyframes [(t, scale)] - no jumps."""
         if t <= scales[0][0]: return scales[0][1]
@@ -1176,6 +1244,7 @@ def main(plan_path):
     rb_frames, rb_peak = cam.get("radial_frames", 6), cam.get("radial_strength", 0.14)
 
     ttype = plan.get("transition", cam.get("transition_type", "flash"))
+    rad_pts = [T(x) for x in plan.get("radial_at", [])]
     yy_, xx_ = np.mgrid[0:H, 0:W].astype(np.float32)
     flash_mask = (1 - 0.5 * (((xx_ - W / 2) / (W / 2)) ** 2 + ((yy_ - H * 0.45) / (H / 2)) ** 2)).clip(0.35, 1)[..., None]
     del yy_, xx_
@@ -1248,6 +1317,18 @@ def main(plan_path):
         bgb *= (1 - sh)
         return bgb * (1 - alpha) + warped * alpha
 
+    anchor0 = list(anchor)
+    track_on = any(L_.get("track") for L_ in lockups)
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml") if (track_on and hasattr(cv2, "CascadeClassifier")) else None
+    face_pos = [None]; face_start = {}
+
+    def track_off(L_):
+        if not L_.get("track") or face_pos[0] is None: return (0.0, 0.0)
+        k_ = id(L_)
+        if k_ not in face_start: face_start[k_] = face_pos[0].copy()
+        d_ = (face_pos[0] - face_start[k_]) * L_.get("track_k", 1.0)
+        return (float(d_[0]), float(d_[1]))
+
     for i in range(nfr):
         raw = dec.stdout.read(W * H * 3)
         if len(raw) < W * H * 3: break
@@ -1256,6 +1337,13 @@ def main(plan_path):
         fr = np.frombuffer(raw, np.uint8).reshape(H, W, 3)
         in_bw = any(a <= t < b for a, b in bw)
         dx = dy = 0
+        anchor = smooth_anchor(t, anchor0)
+        if track_on:  # head tracking on the (unzoomed) footage, smoothed
+            sm_ = cv2.resize(fr, (W // 4, H // 4)); gry = cv2.cvtColor(sm_, cv2.COLOR_RGB2GRAY)
+            det = face_cascade.detectMultiScale(gry, 1.1, 4, minSize=(40, 40)) if face_cascade is not None else ()
+            if len(det):
+                x_, y_, w_, h_ = max(det, key=lambda r: r[2] * r[3]); c_ = np.array([x_ + w_ / 2, y_ + h_ * 0.42]) * 4
+                face_pos[0] = c_ if face_pos[0] is None else face_pos[0] * 0.6 + c_ * 0.4
         if smooth:
             s_eff = smooth_scale(t) * (st["bw_punch"]["zoom"] if in_bw else 1.0)
             cur, since = [], 99
@@ -1320,7 +1408,7 @@ def main(plan_path):
             bl_ = draw_behind_layer(t, s_eff)
             for L_ in behind_lk:
                 bl_ = bl_ or Image.new("RGBA", (W, H), (0, 0, 0, 0))
-                lk_ = render_lockup(L_, t)
+                lk_ = render_lockup(L_, t, track_off(L_))
                 if plan.get("world_overlays"):
                     Mz = np.float32([[s_eff, 0, anchor[0] * (1 - s_eff)], [0, s_eff, anchor[1] * (1 - s_eff)]])
                     lk_ = Image.fromarray(cv2.warpAffine(np.asarray(lk_), Mz, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0)), "RGBA")
@@ -1486,7 +1574,7 @@ def main(plan_path):
             ov.alpha_composite(lay_, (int(lx), int(ly)))
         for L_ in lockups:
             if L_["t0"] <= t < L_["t1"] and not (L_.get("behind") and matte_sess is not None and not cw):
-                ov.alpha_composite(render_lockup(L_, t))
+                ov.alpha_composite(render_lockup(L_, t, track_off(L_)))
         for gfx in graphics:
             draw_graphic(ov, gfx, t)
         if world:  # same zoom as the footage, so overlays stay attached to the scene
@@ -1499,6 +1587,10 @@ def main(plan_path):
             if rs > 0.005:
                 frame_out = np.clip(radial_blur(frame_out.astype(np.float32), rs), 0, 255).astype(np.uint8)
         else:
+            if rad_pts:
+                rs2 = max([rb_peak * max(0, 1 - abs(t - p_) * AF / rb_frames) for p_ in rad_pts] + [0])
+                if rs2 > 0.005:
+                    frame_out = np.clip(radial_blur(frame_out.astype(np.float32), rs2), 0, 255).astype(np.uint8)
             fa = flash_amount(t)
             if fa > 0.01:
                 frame_out = np.clip(apply_flash(frame_out.astype(np.float32), fa), 0, 255).astype(np.uint8)
