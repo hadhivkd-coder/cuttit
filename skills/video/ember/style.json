@@ -217,30 +217,54 @@
   },
   "lockup_fonts": {
     "round": {
-      "file": "DMSans.ttf",
+      "file": "GoogleSansFlex.ttf",
       "axes": [
-        14,
-        800
+        144,
+        100,
+        800,
+        0,
+        0
       ]
     },
     "small": {
-      "file": "DMSans.ttf",
+      "file": "GoogleSansFlex.ttf",
       "axes": [
-        14,
-        600
+        36,
+        100,
+        600,
+        0,
+        0
       ]
     },
     "condensed": {
-      "file": "Oswald.ttf",
+      "file": "GoogleSansFlex.ttf",
       "axes": [
-        500
+        144,
+        50,
+        500,
+        0,
+        0
       ]
     },
     "geo": {
-      "file": "Poppins-SemiBold.ttf"
+      "file": "GoogleSansFlex.ttf",
+      "axes": [
+        144,
+        110,
+        500,
+        0,
+        0
+      ]
     },
     "caps": {
-      "file": "BebasNeue.ttf"
+      "file": "GoogleSansFlex.ttf",
+      "axes": [
+        144,
+        30,
+        600,
+        0,
+        0
+      ]
     }
   }
 }

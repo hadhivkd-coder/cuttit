@@ -1021,32 +1021,53 @@ def main(plan_path):
         lockups.append(L_)
 
     def render_lockup(L_, t):
+        """Lockup = small words aligned to the big word's edges + big word rising from a line. Smooth eases + soft blur."""
         age = t - L_["t0"]; dur = max(L_["t1"] - L_["t0"], 0.1); u = min(1, age / dur)
         lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        dx, dy = (np.array(L_.get("drift", [0, 0])) * u).tolist()
-        gz = 1 + L_.get("zoom", 0.04) * u
-        cxL, cyL = L_.get("x", 0.5) * W, L_.get("y", 0.6) * H
-        def place(im, ax, ay, sc=1.0):
-            if sc != 1.0: im = im.resize((max(1, int(im.width * sc)), max(1, int(im.height * sc))), Image.BILINEAR)
-            px_ = cxL + (ax - cxL) * gz + dx; py_ = cyL + (ay - cyL) * gz + dy
-            lay.alpha_composite(im, (int(px_ - im.width / 2), int(py_ - im.height / 2)))
-        for sm in L_["small"]:
-            a_ = (t - sm["t"]) / 0.22
-            if a_ <= 0: continue
-            e = ease_out(a_)
-            im, bo = lk_text(sm["text"], sm.get("font", "round"), sm.get("px", 52), sm.get("fill", "plain"))
-            if e < 1: im = im.copy(); im.putalpha(im.split()[3].point(lambda v: int(v * e)))
-            place(im, sm.get("x", 0.5) * W, sm.get("y", 0.5) * H + 22 * (1 - e), gz)
+        dx, dy = (np.array(L_.get("drift", [0, 0])) * (0.5 - 0.5 * np.cos(np.pi * u))).tolist()
+        gz = 1 + L_.get("zoom", 0.05) * u
         b_ = L_.get("big")
+        bx, by = (b_.get("x", 0.5) * W, b_.get("y", 0.6) * H) if b_ else (L_.get("x", 0.5) * W, L_.get("y", 0.6) * H)
+        bim = None
+        if b_:
+            bim, bbo = lk_text(b_["text"], b_.get("font", "round"), b_.get("px", 220), b_.get("fill", "gold"), b_.get("extrude", False), b_.get("tracking", -0.02))
+            bb = bim.getbbox() or (0, 0, bim.width, bim.height)
+            bl, br, btop = bx - bim.width / 2 + bb[0], bx - bim.width / 2 + bb[2], by - bim.height / 2 + bb[1]
+        def place(im, ax, ay, sc=1.0, alpha=1.0, blur=0.0):
+            if blur > 0.4: im = im.filter(ImageFilter.GaussianBlur(blur))
+            if alpha < 1: im = im.copy(); im.putalpha(im.split()[3].point(lambda v: int(v * alpha)))
+            s2 = sc * gz
+            if s2 != 1.0: im = im.resize((max(1, int(im.width * s2)), max(1, int(im.height * s2))), Image.BICUBIC)
+            px_ = bx + (ax - bx) * gz + dx; py_ = by + (ay - by) * gz + dy
+            lay.alpha_composite(im, (int(round(px_ - im.width / 2)), int(round(py_ - im.height / 2))))
+        smalls = L_["small"]
+        for k_, sm in enumerate(smalls):
+            a_ = (t - sm["t"]) / 0.38
+            if a_ <= 0: continue
+            e = ease_out_expo(a_)
+            im, sbo = lk_text(sm["text"], sm.get("font", "small"), sm.get("px", 52), sm.get("fill", "plain"), tracking=-0.01)
+            sb = im.getbbox() or (0, 0, im.width, im.height)
+            if bim is not None and sm.get("align", "auto") != "free":
+                al = sm.get("align") if sm.get("align", "auto") != "auto" else (("left" if k_ == 0 else "right") if len(smalls) > 1 else "center")
+                gap = b_.get("px", 220) * 0.06
+                ay = btop - gap - (sb[3] - sb[1]) / 2 - (sb[1] + sb[3]) / 2 + im.height / 2
+                if al == "left": ax = bl - sb[0] + im.width / 2
+                elif al == "right": ax = br - sb[2] + im.width / 2
+                else: ax = bx
+                if sm.get("below"):
+                    ay = btop + (b_.get("px", 220) * 0.95) + gap
+            else:
+                ax, ay = sm.get("x", 0.5) * W, sm.get("y", 0.5) * H
+            place(im, ax, ay + 26 * (1 - e), 1.0, min(1, e * 1.4), 6 * (1 - e))
         if b_ and t >= b_["t"]:
-            im, bo = lk_text(b_["text"], b_.get("font", "round"), b_.get("px", 220), b_.get("fill", "gold"), b_.get("extrude", False), b_.get("tracking", 0.0))
-            e = ease_out_expo((t - b_["t"]) / b_.get("reveal_s", 0.32))
-            if e < 1:  # rises from behind a line at the baseline
-                shift = int(im.height * 0.55 * (1 - e)); clip = bo + int(b_.get("px", 220) * 0.10)
+            e = ease_out_expo((t - b_["t"]) / b_.get("reveal_s", 0.5))
+            im = bim
+            if e < 1:  # rises from behind a line at the baseline, with a soft blur that clears
+                shift = int(im.height * 0.5 * (1 - e)); clip = bbo + int(b_.get("px", 220) * 0.12)
                 tmp = Image.new("RGBA", im.size, (0, 0, 0, 0)); tmp.alpha_composite(im.crop((0, 0, im.width, max(1, im.height - shift))), (0, shift))
                 mk = Image.new("L", im.size, 0); ImageDraw.Draw(mk).rectangle((0, 0, im.width, clip), fill=255)
                 tmp.putalpha(ImageChops.multiply(tmp.split()[3], mk)); im = tmp
-            place(im, b_.get("x", 0.5) * W, b_.get("y", 0.6) * H, gz * (1 + b_.get("grow", 0.06) * min(1, (t - b_["t"]) / dur)))
+            place(im, bx, by, 1 + b_.get("grow", 0.06) * min(1, (t - b_["t"]) / dur), 1.0, 5 * (1 - e))
         return lay
 
     def flamebar(img, g, t):
@@ -1278,7 +1299,12 @@ def main(plan_path):
         if matte_sess is not None and not cw:
             bl_ = draw_behind_layer(t, s_eff)
             for L_ in behind_lk:
-                bl_ = bl_ or Image.new("RGBA", (W, H), (0, 0, 0, 0)); bl_.alpha_composite(render_lockup(L_, t))
+                bl_ = bl_ or Image.new("RGBA", (W, H), (0, 0, 0, 0))
+                lk_ = render_lockup(L_, t)
+                if plan.get("world_overlays"):
+                    Mz = np.float32([[s_eff, 0, anchor[0] * (1 - s_eff)], [0, s_eff, anchor[1] * (1 - s_eff)]])
+                    lk_ = Image.fromarray(cv2.warpAffine(np.asarray(lk_), Mz, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0)), "RGBA")
+                bl_.alpha_composite(lk_)
             if bl_ is not None or back_l:
                 m_ = person_matte(fr)
                 m_ = cv2.warpAffine(m_, np.float32([[s_eff, 0, anchor[0] * (1 - s_eff)], [0, s_eff, anchor[1] * (1 - s_eff)]]), (W, H))[..., None]
@@ -1434,13 +1460,19 @@ def main(plan_path):
                     img.alpha_composite(big, (int(W / 2 - big.width / 2), int(H * 0.52 - cta["kbo"] + bdy)))
                     sm, sdy = land(cta["small"], p)
                     img.alpha_composite(sm, (int(W / 2 - sm.width / 2), int(H * 0.52 - st["cta"]["big_px"] * 0.95 - cta["sbo"] + sdy)))
+        world = plan.get("world_overlays", False) and not cw and not (pop and next((f for f in fullscreens if f["t0"] <= t < f["t1"]), None))
+        ov = Image.new("RGBA", (W, H), (0, 0, 0, 0)) if world else img
         for lay_, (lx, ly) in front_lines:
-            img.alpha_composite(lay_, (int(lx), int(ly)))
+            ov.alpha_composite(lay_, (int(lx), int(ly)))
         for L_ in lockups:
             if L_["t0"] <= t < L_["t1"] and not (L_.get("behind") and matte_sess is not None and not cw):
-                img.alpha_composite(render_lockup(L_, t))
+                ov.alpha_composite(render_lockup(L_, t))
         for gfx in graphics:
-            draw_graphic(img, gfx, t)
+            draw_graphic(ov, gfx, t)
+        if world:  # same zoom as the footage, so overlays stay attached to the scene
+            Mz = np.float32([[s_eff, 0, anchor[0] * (1 - s_eff)], [0, s_eff, anchor[1] * (1 - s_eff)]])
+            ova = cv2.warpAffine(np.asarray(ov), Mz, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
+            img.alpha_composite(Image.fromarray(ova, "RGBA"))
         frame_out = np.asarray(img.convert("RGB"))
         if ttype == "radial":
             rs = radial_strength(t)
