@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Byline Resource Handoff</title>
+<title>Byline Store Handoff</title>
 <style>
   /* Layout: one column of numbered task steps, then copy blocks for every CreatePie field. */
   :root { --bg:#ffffff; --ink:#111114; --muted:#5f5f6a; --line:#e6e6ea; --soft:#f5f6f9; --accent:#2f5cff; --ok:#167a4a;
@@ -37,19 +37,20 @@
 <main class="col">
   <header>
     <div class="eyebrow">Handoff for Claude in Chrome · cuttit</div>
-    <h1>Create the “Byline” resource on CreatePie</h1>
-    <p>Written by Claude (cuttit build session). Claude in Chrome: read this whole page, then do the task below in the CreatePie tab.</p>
+    <h1>Set up the cuttit store and the “Byline” product on Createpie Store</h1>
+    <p>Written by Claude (cuttit build session). Claude in Chrome: read this whole page, then do the task below in the Createpie Store tab (createpie.store, seller dashboard).</p>
   </header>
 
   <section>
     <h2>Task</h2>
     <ol class="task">
-      <li>In CreatePie, create a new <b>paid Resource</b> (a digital download, not a course). <span>If you can't find "Resource", tell the user what product types you see and stop.</span></li>
-      <li>Fill every field from the boxes below, copying the text exactly.</li>
+      <li><b>Store setup</b> (if the store isn't set up yet): store name, website address, template, brand colour, tagline, about and FAQs from the "Store" boxes below. <span>Pick the cleanest, most minimal template (e.g. "Studio"). Ask the user before choosing the website address.</span></li>
+      <li><b>Add a product</b> called Byline, using the "Product" boxes below. Copy the text exactly.</li>
       <li>Price: <b>₹99</b>. <span>Ask the user to confirm before saving the price.</span></li>
-      <li>Files: stop and ask the user to upload each one (you can't pick files from their computer): <b>byline-skill.zip</b> as the downloadable file, <b>poster.jpg</b> as the cover image, and <b>demo.mp4</b> as the preview video (if a preview is supported).</li>
-      <li>If the website builder is available: feature this resource on the homepage with the headline and button text below.</li>
-      <li><b>Do not publish.</b> When finished, list everything you created and give the user the resource page link, so they can review it and publish it themselves.</li>
+      <li>Files: stop and ask the user to upload each one (you can't pick files from their computer): <b>byline-skill.zip</b> as the product file (it must stay <b>downloadable</b>), <b>poster.jpg</b> as the cover, and <b>demo.mp4</b> as a preview video if the product supports one.</li>
+      <li><b>Payments and bank details:</b> don't touch them. If the dashboard asks for them, stop and tell the user.</li>
+      <li>Marketplace listing: ask the user whether to opt in.</li>
+      <li><b>Do not publish.</b> When finished, leave a comment on this handoff page with the store link, the product link and a list of what you created, then tell the user it's ready to review.</li>
     </ol>
   </section>
 
@@ -70,15 +71,26 @@
 
   <section>
     <h2>When it's done</h2>
-    <p>The user reviews and publishes, then pastes the resource link into the cuttit build chat. That chat then makes the ads.</p>
+    <p>The user reviews and publishes. The comment you leave on this page reaches the cuttit build chat automatically. That chat then makes the ads.</p>
   </section>
 </main>
 <script>
 const FIELDS = [
-  ["Resource title", "Byline: premium reel edits with Claude"],
-  ["Short description", "A Claude skill that edits your talking-head video into a premium editorial reel. A new edit for every video."],
-  ["Price", "₹99 (one-time)"],
-  ["Full description", `Turn any talking-head video into a premium editorial reel, made by Claude.
+  ["Store · name", "cuttit"],
+  ["Store · website address (suggested)", "cuttit  (→ cuttit.createpie.store)"],
+  ["Store · brand colour", "#2F7BFF"],
+  ["Store · tagline", "Claude skills that edit your reels."],
+  ["Store · about", `cuttit makes Claude skills for creators. Each skill teaches Claude a complete editing style, so you can turn a simple talking-head video into a premium reel by asking in plain words. No timeline, no After Effects.`],
+  ["Store · FAQ 1", `Q: What is a Claude skill?
+A: A folder of instructions (and tested code) you add to Claude Code once. Then you ask Claude to edit your video in that style.`],
+  ["Store · FAQ 2", `Q: What do I need?
+A: A computer with Claude Code (desktop app or VS Code), plus free tools (Python and ffmpeg). Claude installs the rest.`],
+  ["Store · FAQ 3", `Q: How do I get my skill after buying?
+A: Download the ZIP from your purchase, unzip it into ~/.claude/skills/ on your computer, and tell Claude: "Edit this video with Byline."`],
+  ["Product · title", "Byline: premium reel edits with Claude"],
+  ["Product · short description", "A Claude skill that edits your talking-head video into a premium editorial reel. A new edit for every video."],
+  ["Product · price", "₹99 (one-time)"],
+  ["Product · full description", `Turn any talking-head video into a premium editorial reel, made by Claude.
 
 What Byline does:
 • Text behind you: giant words rise letter by letter behind your head and shoulders
@@ -90,7 +102,7 @@ What Byline does:
 
 It's not a template. Claude reads your script, finds the beats (hook, secret, myth, number, list, proof, call to action) and designs a different edit for every video.
 
-What you get (download):
+What you get (ZIP download):
 • SKILL.md: the full Byline style and creative engine
 • Tested renderer: Python scripts that build the reel
 • Style file, example edit plan and setup guide
@@ -101,18 +113,13 @@ What you need:
 • Render time: about 2 minutes per second of video at 60 fps.
 
 How to use it:
-1. Unzip byline-skill.zip into your Claude skills folder (~/.claude/skills/byline/).
+1. Download byline-skill.zip and unzip it into your Claude skills folder (~/.claude/skills/byline/).
 2. Open your video's folder in Claude Code and say: "Edit this video with Byline."
 3. Choose "customise" or "leave it to me", approve the plan, and get your reel.
 
 Please don't share or resell the skill files. The reels you make are yours.`],
-  ["Tags", "Video editing, Claude, AI, Instagram Reels, Motion graphics, Content creation"],
-  ["Homepage headline", "Byline: premium reel edits with Claude"],
-  ["Homepage button", "Get Byline - ₹99"],
-  ["Thank-you / delivery message", `Thanks for getting Byline!
-1. Download byline-skill.zip and unzip it into ~/.claude/skills/byline/
-2. Open your video's folder in Claude Code and say: "Edit this video with Byline."
-Need help? Message us on Instagram.`]
+  ["Product · tags / category", "Video editing, Claude, AI, Instagram Reels, Motion graphics, Templates"],
+  ["Product · file access", "byline-skill.zip: downloadable (ZIP downloads by default)"]
 ];
 const esc = s => s.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
 document.getElementById("fields").innerHTML = FIELDS.map(([k, v], i) =>
