@@ -42,7 +42,7 @@
       "#FF7A88"
     ],
     "chip_red_glow": "rgba(255,70,90,0.55)",
-    "power": "#FFD700",
+    "power": "#FFEA00",
     "chip_white": [
       "#FFFFFF",
       "#FFFFFF"
@@ -59,16 +59,25 @@
     "exit": "hard cut on the frame the next chunk starts",
     "emphasis_share": "1 power word per sentence, max 1 per 2 s",
     "mode": "word_pop",
-    "power_scale": 2.5,
-    "power_grow_per_s": 0.12,
-    "pop_frames": 6,
+    "power_scale": 1.9,
+    "pop_frames": 4,
     "shadow_tight": {
-      "blur": 3,
-      "opacity": 0.75,
-      "dy": 3
+      "blur": 10,
+      "opacity": 1.0,
+      "dy": 0
     },
-    "power_color": "#FFD700",
-    "max_width": 960
+    "power_color": "#FFEA00",
+    "max_width": 960,
+    "power_grow_total": 0.1,
+    "pop_keys": [
+      0.0,
+      0.75,
+      1.15,
+      1.0
+    ],
+    "glow_blur_px": 45,
+    "glow_strength": 1.6,
+    "hard_exit": true
   },
   "word_cards": {
     "black": {
@@ -112,8 +121,14 @@
     "sfx": "pop",
     "pop_font": "sans",
     "pop_px": 50,
-    "pop_frames": 8,
-    "box_radius": 22
+    "pop_frames": 4,
+    "box_radius": 22,
+    "pop_keys": [
+      0.0,
+      0.75,
+      1.15,
+      1.0
+    ]
   },
   "camera": {
     "punch_in_scale": [

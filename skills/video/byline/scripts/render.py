@@ -384,10 +384,18 @@ def main(plan_path):
                     im_, bo_, adv_ = word_img(fonts, txt_, "sans", size, color=pcol)
                 if pw_:
                     a_ = im_.split()[3]
-                    g1 = a_.filter(ImageFilter.GaussianBlur(size * 0.10)).point(lambda v: int(min(255, v * 1.3)))
-                    g2 = a_.filter(ImageFilter.GaussianBlur(size * 0.28)).point(lambda v: int(v * 0.7))
-                    glow = Image.new("RGBA", im_.size, (0, 0, 0, 0))
-                    for g_ in (g2, g1): glow = Image.alpha_composite(glow, Image.merge("RGBA", (*[Image.new("L", im_.size, v) for v in pcol], g_)))
+                    gb = cs.get("glow_blur_px")
+                    if gb:
+                        big = Image.new("L", (im_.width + 4 * gb, im_.height + 4 * gb), 0); big.paste(a_, (2 * gb, 2 * gb))
+                        im2 = Image.new("RGBA", big.size, (0, 0, 0, 0)); im2.alpha_composite(im_, (2 * gb, 2 * gb)); im_ = im2; bo_ += 2 * gb
+                        a_ = big
+                        gl_ = a_.filter(ImageFilter.GaussianBlur(gb)).point(lambda v: int(min(255, v * cs.get("glow_strength", 1.6))))
+                        glow = Image.merge("RGBA", (*[Image.new("L", im_.size, v) for v in pcol], gl_))
+                    else:
+                        g1 = a_.filter(ImageFilter.GaussianBlur(size * 0.10)).point(lambda v: int(min(255, v * 1.3)))
+                        g2 = a_.filter(ImageFilter.GaussianBlur(size * 0.28)).point(lambda v: int(v * 0.7))
+                        glow = Image.new("RGBA", im_.size, (0, 0, 0, 0))
+                        for g_ in (g2, g1): glow = Image.alpha_composite(glow, Image.merge("RGBA", (*[Image.new("L", im_.size, v) for v in pcol], g_)))
                     im_ = Image.alpha_composite(glow, tight_shadow(im_, st))
                 else:
                     im_ = tight_shadow(im_, st)
@@ -575,6 +583,21 @@ def main(plan_path):
     def bounce_in(age, frames=9):
         return spring(age * AF / frames, (0.0, 0.7, 1.16, 0.95, 1.0))
 
+    emoji_cache = {}
+
+    def emoji_img(ch, size):
+        if (ch, size) in emoji_cache: return emoji_cache[(ch, size)]
+        res = None
+        for path in ("/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", os.path.join(wd, "fonts", "NotoColorEmoji.ttf")):
+            if os.path.exists(path):
+                try:
+                    f_ = ImageFont.truetype(path, 109); im = Image.new("RGBA", (150, 150), (0, 0, 0, 0))
+                    ImageDraw.Draw(im).text((10, 10), ch, font=f_, embedded_color=True)
+                    im = im.crop(im.getbbox()); res = im.resize((size, int(size * im.height / im.width)), Image.LANCZOS); break
+                except Exception: pass
+        emoji_cache[(ch, size)] = res
+        return res
+
     def flame(size):
         K = 4; S_ = size * K; im = Image.new("RGBA", (S_, S_), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
         pts = [(S_ * .5, S_ * .02), (S_ * .78, S_ * .38), (S_ * .86, S_ * .66), (S_ * .7, S_ * .9), (S_ * .5, S_ * .98),
@@ -586,8 +609,12 @@ def main(plan_path):
 
     def ember_graphic(img, g, t, age):
         """Ember UI widgets: progress bar, weekday calendar, polaroid PiP."""
-        dur = g["t1"] - g["t0"]; out_k = 1 - ease_in_cubic((age - (dur - 0.2)) / 0.2)
-        sc = bounce_in(age) * (1 - 0.1 * ease_in_cubic((age - (dur - 0.2)) / 0.2))
+        dur = g["t1"] - g["t0"]
+        if cs.get("hard_exit"):
+            out_k = 1.0; sc = spring(age * AF / cs.get("pop_frames", 4), tuple(cs.get("pop_keys", (0.0, 0.7, 1.16, 0.95, 1.0))))
+        else:
+            out_k = 1 - ease_in_cubic((age - (dur - 0.2)) / 0.2)
+            sc = bounce_in(age) * (1 - 0.1 * ease_in_cubic((age - (dur - 0.2)) / 0.2))
         if sc <= 0.02 or out_k <= 0.01: return
         yel = hex_rgb(st["colors"].get("power", "#FFD700"))
         K = 2
@@ -597,7 +624,10 @@ def main(plan_path):
             d.rounded_rectangle((0, 0, Wd * K - 1, Hd * K - 1), 44 * K, fill=(16, 16, 18, 225), outline=(255, 255, 255, 40), width=2 * K)
             lf = fonts.get("sans", 36 * K)
             d.text((44 * K, 58 * K), g.get("label", "PROGRESS"), font=lf, fill=(255, 255, 255, 235), anchor="lm")
-            q = ease_out(min(1, max(0, (age - 0.25) / g.get("fill_s", 1.0))))
+            if "fill_t0" in g:
+                q = min(1, max(0, (t - T(g["fill_t0"])) / max(T(g["fill_t1"]) - T(g["fill_t0"]), 0.1)))
+            else:
+                q = ease_out(min(1, max(0, (age - 0.25) / g.get("fill_s", 1.0))))
             pct = g.get("value", 0.9) * q
             d.text((Wd * K - 44 * K, 58 * K), f"{int(round(pct * 100))}%", font=lf, fill=yel + (255,), anchor="rm")
             x0, y0, x1, y1 = 44 * K, 116 * K, Wd * K - 44 * K, 160 * K
@@ -605,10 +635,18 @@ def main(plan_path):
             xf = x0 + (x1 - x0) * pct
             if xf > x0 + 10:
                 bar = Image.new("RGBA", L.size, (0, 0, 0, 0)); bd = ImageDraw.Draw(bar)
-                bd.rounded_rectangle((x0, y0, xf, y1), 22 * K, fill=yel + (255,))
+                if g.get("fill") == "orange":
+                    gr_ = np.linspace(0, 1, max(2, int(xf - x0)))[None, :, None] * (np.array(yel) - np.array([255, 110, 0])) + np.array([255, 110, 0])
+                    gim = Image.fromarray(np.repeat(gr_, int(y1 - y0), 0).astype(np.uint8)).convert("RGBA")
+                    mk = Image.new("L", gim.size, 0); ImageDraw.Draw(mk).rounded_rectangle((0, 0, gim.width - 1, gim.height - 1), 22 * K, fill=255); gim.putalpha(mk)
+                    bar.alpha_composite(gim, (int(x0), int(y0)))
+                else:
+                    bd.rounded_rectangle((x0, y0, xf, y1), 22 * K, fill=yel + (255,))
                 gl = bar.split()[3].filter(ImageFilter.GaussianBlur(14 * K)).point(lambda v: int(v * 0.8))
                 L.alpha_composite(Image.merge("RGBA", (*[Image.new("L", L.size, v) for v in yel], gl))); L.alpha_composite(bar)
-            fl = flame(70 * K); L.alpha_composite(fl, (int(xf - fl.width / 2), int((y0 + y1) / 2 - fl.height * 0.62)))
+            fl = emoji_img("🔥", 74 * K) if g.get("emoji", True) else None
+            fl = fl or flame(70 * K)
+            L.alpha_composite(fl, (int(xf - fl.width / 2), int((y0 + y1) / 2 - fl.height * 0.62)))
             L = L.resize((Wd, Hd), Image.LANCZOS)
         elif g["type"] == "week":
             days = g.get("days", ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"])
@@ -652,6 +690,8 @@ def main(plan_path):
         d_ = np.exp(-(((xx_ - W / 2) / (W * 0.7)) ** 2 + ((yy_ - H * 0.7) / (H * 0.5)) ** 2))
         bgarr = (np.zeros(d_.shape + (3,), np.float32) + 10) + np.array([255, 170, 0], np.float32) * 0.22 * d_[..., None]
         bgi = Image.fromarray(bgarr.clip(0, 255).astype(np.uint8)).resize((W, H), Image.BILINEAR).convert("RGBA")
+        if fs.get("type") == "black":
+            return Image.new("RGBA", (W, H), (0, 0, 0, 255))
         if fs.get("type", "tallbar") == "tallbar":
             yel = hex_rgb(st["colors"].get("power", "#FFD700"))
             q = ease_out(min(1, age / fs.get("fill_s", 0.9)))
@@ -1150,8 +1190,10 @@ def main(plan_path):
                 if c and word_pop:
                     for q_, wt_ in zip(c["pw"], c["wt"]):
                         if t < wt_: continue
-                        sc_ = spring((t - wt_) * AF / cs.get("pop_frames", 6), (0.0, 0.7, 1.18, 0.94, 1.0))
-                        if q_["power"]: sc_ *= 1 + cs.get("power_grow_per_s", 0.12) * (t - wt_)
+                        sc_ = spring((t - wt_) * AF / cs.get("pop_frames", 6), tuple(cs.get("pop_keys", (0.0, 0.7, 1.18, 0.94, 1.0))))
+                        if q_["power"]:
+                            if "power_grow_total" in cs: sc_ *= 1 + cs["power_grow_total"] * min(1, (t - wt_) / max(c["t1"] - wt_, 0.1))
+                            else: sc_ *= 1 + cs.get("power_grow_per_s", 0.12) * (t - wt_)
                         if sc_ <= 0.02: continue
                         im_ = q_["img"].resize((max(1, int(q_["img"].width * sc_)), max(1, int(q_["img"].height * sc_))), Image.BILINEAR)
                         cxw = q_["x"] + q_["adv"] / 2
@@ -1177,9 +1219,9 @@ def main(plan_path):
                     shown = [it for it in ch["items"] if it["t"] <= t]
                     hs = [it["img"].height for it in shown]
                     yy = (ch.get("y", 0.76) * H if word_pop else y - 30) - (sum(hs) + st["chips"]["stack_gap_px"] * (len(shown) - 1)) / 2
-                    fade_c = 1 - ease_in_cubic((t - (ch["t1"] - 0.22)) / 0.22)
+                    fade_c = 1.0 if cs.get("hard_exit") else 1 - ease_in_cubic((t - (ch["t1"] - 0.22)) / 0.22)
                     for it, h0 in zip(shown, hs):
-                        sc = spring((t - it["t"]) * AF / st["chips"].get("pop_frames", 10), (0.0, 0.7, 1.18, 0.95, 1.0))
+                        sc = spring((t - it["t"]) * AF / st["chips"].get("pop_frames", 10), tuple(st["chips"].get("pop_keys", (0.0, 0.7, 1.18, 0.95, 1.0))))
                         base_img = shimmer(it["img"], (t - it["t"] - 0.25) / 0.5, 0.6)
                         a_ = base_img.resize((max(1, int(it["img"].width * sc)), max(1, int(it["img"].height * sc))), Image.BILINEAR)
                         if fade_c < 1: a_.putalpha(a_.split()[3].point(lambda v: int(v * max(fade_c, 0))))
