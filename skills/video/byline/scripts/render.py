@@ -562,6 +562,8 @@ def main(plan_path):
             frame_out = np.clip(radial_blur(frame_out.astype(np.float32), rs), 0, 255).astype(np.uint8)
         enc.stdin.write(frame_out.tobytes())
     enc.stdin.close(); enc.wait(); dec.wait()
+    for c in cutaways:
+        if c["dec"]: c["dec"].stdout.close(); c["dec"].kill(); c["dec"].wait()
     if dec_raw: dec_raw.wait()
 
     # 5) audio: voice + SFX (plan + automatic) + ducked music bed
