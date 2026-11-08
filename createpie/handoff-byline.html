@@ -37,13 +37,25 @@
 <main class="col">
   <header>
     <div class="eyebrow">Handoff for Claude in Chrome · cuttit</div>
-    <h1>Finish the Byline product and polish the cuttit store</h1>
+    <h1>Byline on Createpie Store: final fixes (Job 3)</h1>
     <p>Written by Claude (cuttit build session). Claude in Chrome: read this whole page, then do the task below in the Createpie Store tab (createpie.store, seller dashboard).</p>
   </header>
 
   <section>
+    <h2>Job 3: fixes after the first pass</h2>
+    <ol class="task">
+      <li><b>Description:</b> replace the cut-off description with the box <b>"Product · description (500 max)"</b> below (490 characters). Keep its line breaks.</li>
+      <li><b>Banner:</b> replace the banner with <b>store-banner-clean-2400x800.jpg</b> (no text in the image). Set hero alignment to <b>left</b>, so the store's own title sits on the empty dark left side. Keep title "Reels that edit themselves." and the text line.</li>
+      <li><b>Logo text:</b> the 4-character limit makes it read "cutt". <b>Clear the logo text</b> (leave it empty) so only the logo image shows. If it can't be empty, ask the user.</li>
+      <li><b>Duplicate zip:</b> ask the user which they prefer:
+        <span>(a) delete the Byline product and recreate it cleanly (title, ₹99, 500-char description, cover, intro video, exactly 2 files: byline-skill.zip + Byline-Guide.pdf). The product link will change; that's fine because nothing has been sold yet. Or (b) keep it and ask Createpie support to remove the extra file.</span></li>
+      <li>Save, check the phone view, then leave a new comment on this page with the final store and product links.</li>
+    </ol>
+  </section>
+
+  <section>
     <h2>Status</h2>
-    <p>Done already: store "cuttit" at cuttit.createpie.store (Studio template, #2F7BFF, tagline, about, 3 FAQs). A <b>Byline</b> product draft exists at ₹99 with title and description, but <b>no files yet</b>. Don't create a duplicate.</p>
+    <p><b>Jobs 1 and 2 are done</b> (store live with logo, banner, dark mode; Byline product with cover, intro video and files). Job 3 is next. Done earlier: store "cuttit" at cuttit.createpie.store (Studio template, #2F7BFF, tagline, about, 3 FAQs). A <b>Byline</b> product draft exists at ₹99 with title and description, but <b>no files yet</b>. Don't create a duplicate.</p>
   </section>
 
   <section>
@@ -100,6 +112,7 @@
       <tr><td>byline-gallery-4-before-after.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/byline-gallery-4-before-after.jpg">GitHub → Download</a> · gallery 4</td></tr>
       <tr><td>cuttit-logo-1024.png</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/cuttit-logo-1024.png">GitHub → Download</a> · store logo (wordmark)</td></tr>
       <tr><td>cuttit-icon-512.png</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/cuttit-icon-512.png">GitHub → Download</a> · store icon (square)</td></tr>
+      <tr><td>store-banner-clean-2400x800.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/store-banner-clean-2400x800.jpg">GitHub → Download</a> · store banner without text (use this one)</td></tr>
       <tr><td>store-banner-2400x800.jpg</td><td><a href="https://github.com/hadhivkd-coder/cuttit/blob/claude/new-york-edita-club-tzgfl4/createpie/store-assets/store-banner-2400x800.jpg">GitHub → Download</a> · store banner</td></tr>
     </table>
   </section>
@@ -122,6 +135,7 @@ A: A folder of instructions (and tested code) you add to Claude Code once. Then 
 A: A computer with Claude Code (desktop app or VS Code), plus free tools (Python and ffmpeg). Claude installs the rest.`],
   ["Store · FAQ 3", `Q: How do I get my skill after buying?
 A: Download the ZIP from your purchase, unzip it into ~/.claude/skills/ on your computer, and tell Claude: "Edit this video with Byline."`],
+  ["Product · description (500 max)", "A Claude skill that turns your talking-head video into a premium editorial reel, with a new edit for every video.\n• Text behind you\n• Orbit & swoosh lines\n• B-roll as 3D floating cards\n• Pop-in captions with serif power words\n• Motion graphics on glass\n• Light-flash transitions, 60 fps, synced SFX\nIncludes SKILL.md, the tested renderer and a 12-page PDF guide.\nNeeds a computer with Claude Code (Python + ffmpeg, free).\nUnzip into ~/.claude/skills/ and say: \"Edit this video with Byline.\""],
   ["Product · title", "Byline: premium reel edits with Claude"],
   ["Product · short description", "A Claude skill that edits your talking-head video into a premium editorial reel. A new edit for every video."],
   ["Product · price", "₹99 (one-time)"],
