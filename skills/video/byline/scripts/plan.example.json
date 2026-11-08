@@ -198,10 +198,6 @@
    "deep_whoosh"
   ],
   [
-   4.44,
-   "glitch"
-  ],
-  [
    6.02,
    "wrong"
   ],
@@ -321,6 +317,11 @@
    "Resaltador highlighter Sound Effect.mp3",
    0.35,
    -25
+  ],
+  "flash": [
+   "remembering woosh.MP3",
+   1.1,
+   -17
   ]
  },
  "cutaways": [
@@ -333,7 +334,9 @@
    "zoom": [
     1.0,
     1.08
-   ]
+   ],
+   "mode": "card",
+   "enter": "right"
   },
   {
    "t0": 1.7,
@@ -344,7 +347,8 @@
    "zoom": [
     1.04,
     1.12
-   ]
+   ],
+   "mode": "full"
   },
   {
    "t0": 6.58,
@@ -355,7 +359,9 @@
    "zoom": [
     1.0,
     1.07
-   ]
+   ],
+   "mode": "card",
+   "enter": "bottom"
   },
   {
    "t0": 9.2,
@@ -366,7 +372,9 @@
    "zoom": [
     1.0,
     1.06
-   ]
+   ],
+   "mode": "card",
+   "enter": "scale"
   }
  ],
  "graphics": [
@@ -441,5 +449,7 @@
     "with me"
    ]
   ]
- }
+ },
+ "fps": 60,
+ "transition": "flash"
 }
